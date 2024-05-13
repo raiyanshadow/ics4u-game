@@ -6,16 +6,13 @@ class Player(pygame.sprite.Sprite):
              './sprites/rob/rob_idle_2.png', 
              './sprites/rob/rob_idle_3.png', 
              './sprites/rob/rob_idle_4.png',
-             './sprites/rob/rob_idle_3.png',
-             './sprites/rob/rob_idle_2.png'],
+             './sprites/rob/rob_idle_5.png',
+             './sprites/rob/rob_idle_6.png'],
              'walk':['./sprites/rob/rob_walk_1.png',
              './sprites/rob/rob_walk_2.png',
              './sprites/rob/rob_walk_3.png',
              './sprites/rob/rob_walk_4.png',
-             './sprites/rob/rob_walk_5.png',
-             './sprites/rob/rob_walk_4.png',
-             './sprites/rob/rob_walk_3.png',
-             './sprites/rob/rob_walk_2.png',]}
+             './sprites/rob/rob_walk_5.png',]}
   def __init__(self):
     super(Player, self).__init__()
     self.surf = pygame.Surface((64*3, 64*3))
