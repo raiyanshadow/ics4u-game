@@ -1,0 +1,7 @@
+import pygame
+
+SCREEN_HEIGHT = 720
+SCREEN_WIDTH = 1280
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
