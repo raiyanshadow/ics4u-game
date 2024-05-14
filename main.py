@@ -10,6 +10,23 @@ def animate(update):
 
 pygame.init()
 
+#show fps
+fps = pygame.time.Clock()
+
+#show fps
+
+constants.SCREEN = pygame.display.set_mode((constants.SCREEN_WIDTH, constants.SCREEN_HEIGHT))
+
+fps_font = pygame.font.SysFont("monospace", 15)
+
+def show_fps(screen, clock):
+    """utility function to show frames per second"""
+    fps = str(int(clock.get_fps()))
+    fps_surface = fps_font.render(fps, True, constants.WHITE)
+    fps_rect = fps_surface.get_rect()
+    fps_rect.topleft = (10, 10)
+    screen.blit(fps_surface, fps_rect)
+
 clockobject = pygame.time.Clock()
 
 rob = player.Player()
@@ -60,10 +77,8 @@ while True:
     for i in range(0, math.ceil(constants.SCREEN_WIDTH/constants.BG.get_width())): 
         constants.SCREEN.blit(constants.BG, (i*constants.BG.get_width(), 0))
 
-    pygame.draw.line(constants.SCREEN, constants.BLACK, (constants.SCROLL_THRESH, 0), (constants.SCREEN_WIDTH, constants.SCREEN_HEIGHT))
-
-    if rob.facing: constants.SCREEN.blit(rob.bigger_img, rob.rect)
-    else: constants.SCREEN.blit(pygame.transform.flip(rob.bigger_img, True, False), rob.rect)
-
+    if rob.facing: constants.SCREEN.blit(rob.bigger_img, rob.pos)
+    else: constants.SCREEN.blit(pygame.transform.flip(rob.bigger_img, True, False), rob.pos)
+    show_fps(constants.SCREEN, clockobject)
     pygame.display.flip()
     clockobject.tick(60)

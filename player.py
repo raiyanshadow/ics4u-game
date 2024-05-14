@@ -1,49 +1,28 @@
 import pygame, constants, os, time, random
 from pygame.locals import *
 
+vec = pygame.math.Vector2
+
 class Player(pygame.sprite.Sprite):
-  sprites = {'idle':['./sprites/rob/rob_idle_1.png', 
-             './sprites/rob/rob_idle_2.png', 
-             './sprites/rob/rob_idle_3.png', 
-             './sprites/rob/rob_idle_4.png',
-             './sprites/rob/rob_idle_5.png',
-             './sprites/rob/rob_idle_6.png'],
-             'walk':['./sprites/rob/rob_walk_1.png',
-             './sprites/rob/rob_walk_2.png',
-             './sprites/rob/rob_walk_3.png',
-             './sprites/rob/rob_walk_4.png',
-             './sprites/rob/rob_walk_5.png',],
-             'attackA':['./sprites/rob/rob_attackA_1.png',
-             './sprites/rob/rob_attackA_2.png',
-             './sprites/rob/rob_attackA_3.png',
-             './sprites/rob/rob_attackA_4.png',
-             './sprites/rob/rob_attackA_5.png',
-             './sprites/rob/rob_attackA_6.png',
-             './sprites/rob/rob_attackA_7.png',
-             './sprites/rob/rob_attackA_8.png',
-             './sprites/rob/rob_attackA_9.png',
-             './sprites/rob/rob_attackA_10.png',
-             './sprites/rob/rob_attackA_11.png',
-             './sprites/rob/rob_attackA_12.png',],
-             'attackB':['./sprites/rob/rob_attackB_1.png',
-             './sprites/rob/rob_attackB_2.png',
-             './sprites/rob/rob_attackB_3.png',
-             './sprites/rob/rob_attackB_4.png',
-             './sprites/rob/rob_attackB_5.png',
-             './sprites/rob/rob_attackB_6.png',
-             './sprites/rob/rob_attackB_7.png',
-             './sprites/rob/rob_attackB_8.png',
-             './sprites/rob/rob_attackB_9.png',
-             './sprites/rob/rob_attackB_10.png',
-             './sprites/rob/rob_attackB_11.png',
-             './sprites/rob/rob_attackB_12.png',
-             './sprites/rob/rob_attackB_13.png']}
+  sprites = {'idle':[], 'walk':[], 'attackA':[], 'attackB':[]}
+  for fname in os.listdir('./sprites/rob'):
+    if fname.endswith('.png'):
+      if fname.startswith('rob_idle'):
+        sprites['idle'].append('./sprites/rob/'+fname)
+      elif fname.startswith('rob_walk'):
+        sprites['walk'].append('./sprites/rob/'+fname)
+      elif fname.startswith('rob_attackA'):
+        sprites['attackA'].append('./sprites/rob/'+fname)
+      elif fname.startswith('rob_attackB'):
+        sprites['attackB'].append('./sprites/rob/'+fname)
   attacks = ['attackA', 'attackB']
+  for i in list(sprites.keys()):
+     sprites[i] = sorted(sprites[i], key = lambda x: x[-7:-4])
   
   def __init__(self):
     super(Player, self).__init__()
     self.surf = pygame.Surface((64*3, 64*3))
-    self.rect = pygame.Rect(0, 720-3*64-32, 128, 128)
+    self.rect = pygame.Rect(32, constants.SCREEN_HEIGHT-64*3, 64*3, 64*3)
     self.a_frame = 0
     self.state = 'idle'
     self.image = pygame.image.load(self.sprites[self.state][self.a_frame])
@@ -52,41 +31,47 @@ class Player(pygame.sprite.Sprite):
     self.facing = True
     self.attacking = 1
     self.attack_type = 'attackA'
+    self.pos = vec(self.rect.x, self.rect.y)
+    self.vel = vec(0, 0)
+    self.acc = vec(0, 0)
 
   def update(self, pressed_keys):
-
-    if pressed_keys[K_x]:
+    self.acc = vec(0, 0)
+    if pressed_keys[K_x] and self.state != 'attackA' and self.state != 'attackB':
         self.state = random.choice(self.attacks)
         self.attack_type = self.state
-        self.attacking = 12
+        if self.state == 'attackA':
+            self.attacking = 12
+        elif self.state == 'attackB':
+            self.attacking = 13
 
     if pressed_keys[K_LEFT]:
         if self.facing:
             self.facing = False
         self.state = 'walk'
-        self.rect.move_ip(-3.5, 0)
+        self.acc.x = -0.3
         
     elif pressed_keys[K_RIGHT]:
         if not self.facing:
            self.facing = True
         self.state = 'walk'
-        self.rect.move_ip(3.5, 0)
+        self.acc.x = 0.3
         
     else:
         self.state = 'idle'
-      
-  
-    if self.rect.left <= 0:
-      self.rect.left = 0
-    if self.rect.right >= constants.SCREEN_WIDTH:
-      self.rect.right = constants.SCREEN_WIDTH
-    if self.rect.top <= 0:
-      self.rect.top = 0
-    if self.rect.bottom >= constants.SCREEN_HEIGHT:
-      self.rect.bottom = constants.SCREEN_HEIGHT
     
     if self.rect.right >= constants.SCROLL_THRESH:
        constants.SCROLL = -3.5
     elif self.rect.left <= constants.SCROLL_THRESH:
        constants.SCROLL = 3.5
+    
+    self.acc += self.vel * -0.05  # friction = 0.12
+    self.vel += self.acc
+    self.pos += self.vel + 0.5 * self.acc
 
+    if self.pos.x+self.size[0]*3 >= constants.SCREEN_WIDTH:
+        self.pos.x = constants.SCREEN_WIDTH-self.size[0]*3
+    if self.pos.x <= 0:
+        self.pos.x = 0
+
+    self.rect.centerx = self.pos.x
