@@ -39,6 +39,7 @@ class Player(pygame.sprite.Sprite):
     self.acc = vec(0, 0)
     if pressed_keys[K_x] and self.state != 'attackA' and self.state != 'attackB':
         self.state = random.choice(self.attacks)
+        time.sleep(0.01)
         self.attack_type = self.state
         if self.state == 'attackA':
             self.attacking = 12
