@@ -1,4 +1,4 @@
-import player, enemy, pygame, random, constants
+import player, enemy, pygame, random, constants, math
 from pygame.locals import *
 global update
 
@@ -48,8 +48,19 @@ while True:
     constants.SCREEN.fill((200, 200, 200))
 
     if pygame.time.get_ticks() - update >= cooldown:
+        if rob.attacking > 1:
+            rob.state = rob.attack_type
+            cooldown = 90
+            rob.attacking -= 1
+        else:
+            cooldown = 150
         update = pygame.time.get_ticks()
         animate(update)
+
+    for i in range(0, math.ceil(constants.SCREEN_WIDTH/constants.BG.get_width())): 
+        constants.SCREEN.blit(constants.BG, (i*constants.BG.get_width(), 0))
+
+    pygame.draw.line(constants.SCREEN, constants.BLACK, (constants.SCROLL_THRESH, 0), (constants.SCREEN_WIDTH, constants.SCREEN_HEIGHT))
 
     if rob.facing: constants.SCREEN.blit(rob.bigger_img, rob.rect)
     else: constants.SCREEN.blit(pygame.transform.flip(rob.bigger_img, True, False), rob.rect)
