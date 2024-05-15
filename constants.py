@@ -1,5 +1,6 @@
 import pygame
 
+GAME_STATE = 'initializing'
 SCREEN_HEIGHT = 720
 SCREEN_WIDTH = 1280
 BLACK = (0, 0, 0)

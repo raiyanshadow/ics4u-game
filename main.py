@@ -1,4 +1,4 @@
-import player, enemy, pygame, random, constants, math
+import player, enemy, pygame, random, constants, math, time
 from pygame.locals import *
 global update
 
@@ -17,7 +17,21 @@ fps = pygame.time.Clock()
 
 constants.SCREEN = pygame.display.set_mode((constants.SCREEN_WIDTH, constants.SCREEN_HEIGHT))
 
-fps_font = pygame.font.SysFont("monospace", 15)
+fps_font = pygame.font.SysFont("monospace", 20)
+
+studio_image = pygame.image.load('./sprites/studio.png')
+super_mountain_dusk = {'far-clouds':pygame.image.load('./sprites/Super Mountain Dusk Files/Layers/far-clouds.png'),
+                       'far-mountains':pygame.image.load('./sprites/Super Mountain Dusk Files/Layers/far-mountains.png'),
+                       'mountains':pygame.image.load('./sprites/Super Mountain Dusk Files/Layers/mountains.png'),
+                       'near-clouds':pygame.image.load('./sprites/Super Mountain Dusk Files/Layers/near-clouds.png'),
+                       'sky':pygame.image.load('./sprites/Super Mountain Dusk Files/Layers/sky.png'),
+                       'trees':pygame.image.load('./sprites/Super Mountain Dusk Files/Layers/trees.png')}
+round_1_ground = pygame.image.load('./sprites/ground.png')
+title = pygame.image.load('./sprites/title.png')
+title = pygame.transform.scale(title, (constants.SCREEN_WIDTH-200, constants.SCREEN_HEIGHT-200))
+for i in super_mountain_dusk:
+    super_mountain_dusk[i] = pygame.transform.scale(super_mountain_dusk[i], (constants.SCREEN_WIDTH, constants.SCREEN_HEIGHT))
+rob = player.Player()
 
 def show_fps(screen, clock):
     """utility function to show frames per second"""
@@ -27,20 +41,73 @@ def show_fps(screen, clock):
     fps_rect.topleft = (10, 10)
     screen.blit(fps_surface, fps_rect)
 
+
+def initialize():
+    centered = (constants.SCREEN_WIDTH//2-studio_image.get_width()//2, constants.SCREEN_HEIGHT//2-studio_image.get_height()//2)
+    time.sleep(1)
+    for i in range(255):
+        constants.SCREEN.fill(constants.BLACK)
+        studio_image.set_alpha(i)
+        constants.SCREEN.blit(studio_image, centered)
+        pygame.display.update()
+        time.sleep(0.001)
+    time.sleep(1.5)
+    for i in range(255, 0, -1):
+        constants.SCREEN.fill(constants.BLACK)
+        studio_image.set_alpha(i)
+        constants.SCREEN.blit(studio_image, centered)
+        pygame.display.update()
+        time.sleep(0.001)
+    time.sleep(1)
+
+
+
+def initial_screen():
+    def render(update):
+        cooldown = 150
+        constants.SCREEN.blit(super_mountain_dusk['sky'], (0, 0))
+        constants.SCREEN.blit(super_mountain_dusk['far-clouds'], (0, 0))
+        constants.SCREEN.blit(super_mountain_dusk['near-clouds'], (0, 0))
+        constants.SCREEN.blit(super_mountain_dusk['far-mountains'], (0, 0))
+        constants.SCREEN.blit(super_mountain_dusk['mountains'], (0, 0))
+        constants.SCREEN.blit(super_mountain_dusk['trees'], (0, 0))
+        for i in range(0, math.ceil(constants.SCREEN_WIDTH/round_1_ground.get_width())):
+            constants.SCREEN.blit(round_1_ground, (i*round_1_ground.get_width(), constants.SCREEN_HEIGHT-round_1_ground.get_height()))
+
+        if pygame.time.get_ticks() - update >= cooldown:
+            if rob.attacking > 1:
+                rob.state = rob.attack_type
+                cooldown = 90
+                rob.attacking -= 1
+            else:
+                cooldown = 150
+            update = pygame.time.get_ticks()
+            animate(update)
+        constants.SCREEN.blit(rob.bigger_img, (0+round_1_ground.get_width()+rob.pos.x, 0+rob.pos.y))
+        constants.SCREEN.blit(title, (0, 0))
+
+    clockobject = pygame.time.Clock()
+    update = pygame.time.get_ticks()
+    while True:
+        
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    pygame.quit()
+                    quit()
+            elif event.type == QUIT:
+                pygame.quit()
+                quit()
+        render(update)
+        pygame.display.flip()
+        clockobject.tick(60)
+        
+    
+
 clockobject = pygame.time.Clock()
+initialize()
 
-rob = player.Player()
-
-ADDENEMY = pygame.USEREVENT + 1
-pygame.time.set_timer(ADDENEMY, 255)
-
-enemies = pygame.sprite.Group()
-all_sprites = pygame.sprite.Group()
-all_sprites.add(rob)
-
-update = pygame.time.get_ticks()
-cooldown = 150
-frame = 0
+initial_screen()
 
 while True:
     for event in pygame.event.get():
@@ -51,34 +118,8 @@ while True:
         elif event.type == QUIT:
             pygame.quit()
             quit()
-        elif event.type == ADDENEMY:
-            new_enemy = enemy.Enemy()
-            enemies.add(new_enemy)
-            all_sprites.add(new_enemy)
-
-    rob.update(pygame.key.get_pressed())
-    enemies.update()
-
-    if pygame.sprite.spritecollideany(rob, enemies):
-        rob.kill()
-
-    constants.SCREEN.fill((200, 200, 200))
-
-    if pygame.time.get_ticks() - update >= cooldown:
-        if rob.attacking > 1:
-            rob.state = rob.attack_type
-            cooldown = 90
-            rob.attacking -= 1
-        else:
-            cooldown = 150
-        update = pygame.time.get_ticks()
-        animate(update)
-
+    show_fps(constants.SCREEN, clockobject)
     for i in range(0, math.ceil(constants.SCREEN_WIDTH/constants.BG.get_width())): 
         constants.SCREEN.blit(constants.BG, (i*constants.BG.get_width(), 0))
-
-    if rob.facing: constants.SCREEN.blit(rob.bigger_img, rob.pos)
-    else: constants.SCREEN.blit(pygame.transform.flip(rob.bigger_img, True, False), rob.pos)
-    show_fps(constants.SCREEN, clockobject)
     pygame.display.flip()
     clockobject.tick(60)

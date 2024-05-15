@@ -3,18 +3,18 @@ from pygame.locals import *
 
 vec = pygame.math.Vector2
 
+def extract(fname):
+   res = ""
+   for i in fname:
+      if i.isalpha():
+         res = "".join([res, i])
+   return res
+
 class Player(pygame.sprite.Sprite):
-  sprites = {'idle':[], 'walk':[], 'attackA':[], 'attackB':[]}
+  sprites = {'idle':[], 'walk':[], 'attackA':[], 'attackB':[], 'start':[]}
   for fname in os.listdir('./sprites/rob'):
     if fname.endswith('.png'):
-      if fname.startswith('rob_idle'):
-        sprites['idle'].append('./sprites/rob/'+fname)
-      elif fname.startswith('rob_walk'):
-        sprites['walk'].append('./sprites/rob/'+fname)
-      elif fname.startswith('rob_attackA'):
-        sprites['attackA'].append('./sprites/rob/'+fname)
-      elif fname.startswith('rob_attackB'):
-        sprites['attackB'].append('./sprites/rob/'+fname)
+      sprites[extract(fname.split('_')[1].replace('.png', ''))].append('./sprites/rob/'+fname)
   attacks = ['attackA', 'attackB']
   for i in list(sprites.keys()):
      sprites[i] = sorted(sprites[i], key = lambda x: x[-7:-4])
@@ -24,7 +24,7 @@ class Player(pygame.sprite.Sprite):
     self.surf = pygame.Surface((64*3, 64*3))
     self.rect = pygame.Rect(32, constants.SCREEN_HEIGHT-64*3, 64*3, 64*3)
     self.a_frame = 0
-    self.state = 'idle'
+    self.state = 'start'
     self.image = pygame.image.load(self.sprites[self.state][self.a_frame])
     self.size = self.image.get_size()
     self.bigger_img = pygame.transform.scale(self.image, (self.size[0]*3, self.size[1]*3))
@@ -35,16 +35,20 @@ class Player(pygame.sprite.Sprite):
     self.vel = vec(0, 0)
     self.acc = vec(0, 0)
 
+  def attack(self):
+    self.state = random.choice(self.attacks)
+    time.sleep(0.01)
+    self.attack_type = self.state
+    if self.state == 'attackA':
+        self.attacking = 12
+    elif self.state == 'attackB':
+        self.attacking = 13
+
   def update(self, pressed_keys):
     self.acc = vec(0, 0)
-    if pressed_keys[K_x] and self.state != 'attackA' and self.state != 'attackB':
-        self.state = random.choice(self.attacks)
-        time.sleep(0.01)
-        self.attack_type = self.state
-        if self.state == 'attackA':
-            self.attacking = 12
-        elif self.state == 'attackB':
-            self.attacking = 13
+    
+    if constants.GAME_STATE == 'initializing':
+      self.state = 'start'
 
     if pressed_keys[K_LEFT]:
         if self.facing:
