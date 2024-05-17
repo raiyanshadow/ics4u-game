@@ -14,6 +14,11 @@ def animate():
     rob.size = rob.image.get_size()
     rob.bigger_img = pygame.transform.scale(rob.image, (rob.size[0]*3, rob.size[1]*3))
 
+def clip_image(image, clip):
+    image.set_clip(clip)
+    return image.subsurface(image.get_clip())
+
+
 pygame.init()
 
 #show fps
@@ -35,21 +40,31 @@ for fname in sorted(os.listdir('./sprites/Super Mountain Dusk Files/Layers')):
 super_mountain_dusk_parallax_scroll = [0, 2, 3, 5, 5, 8]
 maxwidth = []
 for i in range(len(super_mountain_dusk)):
-    maxwidth.append(math.ceil(constants.SCREEN_WIDTH/super_mountain_dusk[i].get_width())+1+math.ceil(super_mountain_dusk_parallax_scroll[i]/1.2))
+    maxwidth.append(math.ceil(constants.SCREEN_WIDTH/super_mountain_dusk[i].get_width())+1+math.ceil(super_mountain_dusk_parallax_scroll[i]))
 
 round_1_ground = pygame.image.load('./sprites/ground.png').convert()
 title = pygame.image.load('./sprites/title.png').convert()
 title = pygame.transform.scale(title, (constants.SCREEN_WIDTH-200, constants.SCREEN_HEIGHT-200)).convert()
 title.set_colorkey(constants.BLACK)
-prompt = pygame.image.load('./sprites/prompt_text.png').convert()
-prompt.set_colorkey(constants.BLACK)
-prompt = pygame.transform.scale(prompt, (prompt.get_width()/2, prompt.get_height()/2)).convert()
+prompt = constants.FONT_48.render('press any key to start', True, constants.WHITE, None)
+fader = pygame.surface.Surface((constants.SCREEN_WIDTH, constants.SCREEN_HEIGHT)).convert()
+fader.fill(constants.BLACK)
 rob = player.Player()
+borders = []
+
+for i in range(5):
+    borders.append([])
+    for j in range(4):
+        image = pygame.image.load('./sprites/borders.png').convert()
+        image.set_colorkey(constants.BLACK)
+        image = clip_image(image, (j*64, i*64, 64, 64))
+        borders[i].append(image)
+
 
 def show_fps(screen, clock):
     """utility function to show frames per second"""
     fps = str(int(clock.get_fps()))
-    fps_surface = fps_font.render(fps, True, constants.WHITE)
+    fps_surface = fps_font.render(fps, True, constants.BLACK)
     fps_rect = fps_surface.get_rect()
     fps_rect.topleft = (10, 10)
     constants.SCREEN.blit(fps_surface, fps_rect)
@@ -72,6 +87,7 @@ def initialize():
         pygame.display.update()
         time.sleep(0.001)
     time.sleep(1)
+
 def initial_screen():
     global scroll
     scroll = 0
@@ -81,29 +97,30 @@ def initial_screen():
             for i in range(maxwidth[j]):
                 constants.SCREEN.blit(super_mountain_dusk[j], ((i*super_mountain_dusk[j].get_width())-round(scroll*super_mountain_dusk_parallax_scroll[j]), 0))
         for i in range(0, math.ceil(constants.SCREEN_WIDTH/round_1_ground.get_width())):
-            constants.SCREEN.blit(round_1_ground, (i*round_1_ground.get_width(), constants.SCREEN_HEIGHT-round_1_ground.get_height()))
-        constants.SCREEN.blit(pygame.transform.scale2x(rob.image), (0+round_1_ground.get_width()+rob.pos.x, rob.pos.y+50))
+            constants.SCREEN.blit(round_1_ground, (i*round_1_ground.get_width()-scroll, constants.SCREEN_HEIGHT-round_1_ground.get_height()))
+            constants.SCREEN.blit(round_1_ground, (i*round_1_ground.get_width()-scroll+constants.SCREEN_WIDTH, constants.SCREEN_HEIGHT-round_1_ground.get_height()))
+        constants.SCREEN.blit(pygame.transform.scale2x(rob.image), (0+round_1_ground.get_width()+rob.pos.x, rob.pos.y+75))
         constants.SCREEN.blit(title, (0, 0))
-        if showing: constants.SCREEN.blit(prompt, (460, 580))
+        if showing: constants.SCREEN.blit(prompt, (350, 600), special_flags=BLEND_ALPHA_SDL2)
+        fader.set_alpha(fade)
+        constants.SCREEN.blit(fader, (0, 0))
     
     update = pygame.time.get_ticks()
     cooldown = 150
     showing = True
     cur = 0
+    global fade
+    fade = 254
     while True:
         for event in pygame.event.get():
-            if event.type == KEYDOWN:
-                if event.key == K_ESCAPE:
-                    pygame.quit()
-                    quit()
-                else:
-                    return
+            if event.type == KEYDOWN: return 
             if event.type == MOUSEBUTTONDOWN:
                 print(pygame.mouse.get_pos())
             elif event.type == QUIT:
                 pygame.quit()
                 quit()
-        scroll += 1
+        scroll += 2
+        if fade > 0: fade -= 5
 
         if abs(scroll) > constants.SCREEN_WIDTH:
             scroll = 0
@@ -128,31 +145,86 @@ def initial_screen():
 
 def menu():
     global scroll
+    selected = 0
+    controls = False
     clockobject = pygame.time.Clock()
+    hsize = true_resize(600, borders[0][0])
     def render(scroll):
         for j in range(len(super_mountain_dusk)):
             for i in range(maxwidth[j]):
                 constants.SCREEN.blit(super_mountain_dusk[j], ((i*super_mountain_dusk[j].get_width())-round(scroll*super_mountain_dusk_parallax_scroll[j]), 0))
         for i in range(0, math.ceil(constants.SCREEN_WIDTH/round_1_ground.get_width())):
             constants.SCREEN.blit(round_1_ground, (i*round_1_ground.get_width(), constants.SCREEN_HEIGHT-round_1_ground.get_height()))
-        constants.SCREEN.blit(pygame.transform.scale2x(rob.image), (0+round_1_ground.get_width()+rob.pos.x, rob.pos.y+50))
+        constants.SCREEN.blit(pygame.transform.scale2x(rob.image), (0+round_1_ground.get_width()+rob.pos.x, rob.pos.y+75))
         constants.SCREEN.blit(title, (0, 0))
+        for i in range(len(texts)): 
+            if i == selected: constants.SCREEN.blit(constants.FONT_24.render(texts[i], True, constants.SELECT), (constants.SCREEN_WIDTH//2+250, constants.SCREEN_HEIGHT//2+185+i*50), special_flags=BLEND_ALPHA_SDL2)
+            else: constants.SCREEN.blit(constants.FONT_24.render(texts[i], True, constants.WHITE), (constants.SCREEN_WIDTH//2+250, constants.SCREEN_HEIGHT//2+185+i*50), special_flags=BLEND_ALPHA_SDL2)
+        if controls:
+            borders[3][2] = pygame.transform.scale(borders[3][2], (constants.SCREEN_WIDTH-200, hsize-100))
+            controltext = constants.FONT_24.render('Controls', True, constants.WHITE)
+            constants.SCREEN.blit(borders[3][2], (100, 100))
+            constants.SCREEN.blit(controltext, (100+round(borders[3][2].get_width()/2-controltext.get_width()/2), 185), special_flags=BLEND_ALPHA_SDL2)
+            for i in range(len(controlrenders)):
+                constants.SCREEN.blit(controlrenders[i][2], controlrenders[i][1], special_flags=BLEND_ALPHA_SDL2)
+                text = constants.FONT_16.render(controlrenders[i][0], True, constants.WHITE)
+                if controlrenders[i][1][0] < 300: constants.SCREEN.blit(text, (controlrenders[i][1][0]+controlrenders[i][2].get_width()+15, controlrenders[i][1][1]+round(controlrenders[i][2].get_height()/2-text.get_height()/2)), special_flags=BLEND_ALPHA_SDL2)
+                else: constants.SCREEN.blit(text, (controlrenders[i][1][0]-text.get_width()-15, controlrenders[i][1][1]+10), special_flags=BLEND_ALPHA_SDL2)
         
+    texts = ["new game", "view controls", "quit game"]
     
+    controlrenders = [["move", (220, 235)],
+                    ["heal", (765,355)],
+                    ["select", (210,345)], 
+                    ["exit", (220,465)], 
+                    ["pickup/interact", (765,295)], 
+                    ["dash", (735, 235)], 
+                    ["inventory", (210,405)], 
+                    ["attack", (765,415)], 
+                    ["jump", (765,475)]]
+    x = 0
+    for i in os.listdir('sprites/keys/'):
+        tmp_img = pygame.image.load('sprites/keys/'+i)
+        tmp_img = pygame.transform.scale(tmp_img, (tmp_img.get_width()*3, tmp_img.get_height()*3))
+        controlrenders[x].append(tmp_img)
+        x+=1
+
     update = pygame.time.get_ticks()
     cooldown = 150
     while True:
         for event in pygame.event.get():
-            if event.type == KEYDOWN:
+            if controls:
+                if event.type == KEYDOWN:
+                    if event.key == K_ESCAPE:
+                        controls = False
+                if event.type == MOUSEBUTTONDOWN:
+                    print(pygame.mouse.get_pos())
+                elif event.type == QUIT:
+                    pygame.quit()
+                    quit()
+            elif event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
                     pygame.quit()
                     quit()
-            if event.type == MOUSEBUTTONDOWN:
+                if event.key == K_UP:
+                    selected -= 1
+                if event.key == K_DOWN:
+                    selected += 1
+                if selected > 2: selected = 0
+                elif selected < 0: selected = 2
+                if event.key == K_RETURN and selected == 0:
+                    return
+                if event.key == K_RETURN and selected == 1:
+                    controls = True
+                if event.key == K_RETURN and selected == 2:
+                    pygame.quit()
+                    quit() 
+            elif event.type == MOUSEBUTTONDOWN:
                 print(pygame.mouse.get_pos())
             elif event.type == QUIT:
                 pygame.quit()
                 quit()
-        scroll += 1
+        scroll += 2
 
         if abs(scroll) > constants.SCREEN_WIDTH:
             scroll = 0
@@ -168,27 +240,12 @@ def menu():
             animate()
         render(scroll)
         pygame.display.flip()
-        clockobject.tick(75)
+        clockobject.tick(144)
         
-    
-
 clockobject = pygame.time.Clock()
-initialize()
 
+initialize()
 initial_screen()
 menu()
 
-while True:
-    for event in pygame.event.get():
-        if event.type == KEYDOWN:
-            if event.key == K_ESCAPE:
-                pygame.quit()
-                quit()
-        elif event.type == QUIT:
-            pygame.quit()
-            quit()
-    show_fps(constants.SCREEN, clockobject)
-    for i in range(0, math.ceil(constants.SCREEN_WIDTH/constants.BG.get_width())): 
-        constants.SCREEN.blit(constants.BG, (i*constants.BG.get_width(), 0))
-    pygame.display.flip()
-    clockobject.tick(60)
+pygame.quit()
