@@ -1,4 +1,5 @@
-import player, enemy, pygame, random, constants, math, time, os
+import player, enemy, pygame, random, math, time, os
+from constants import *
 from pygame.locals import *
 global update
 
@@ -24,9 +25,7 @@ pygame.init()
 #show fps
 fps = pygame.time.Clock()
 
-#show fps
-
-constants.SCREEN = pygame.display.set_mode((constants.SCREEN_WIDTH, constants.SCREEN_HEIGHT))
+SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 fps_font = pygame.font.SysFont("monospace", 20)
 
@@ -34,21 +33,21 @@ studio_image = pygame.image.load('./sprites/studio.png').convert()
 super_mountain_dusk = []
 for fname in sorted(os.listdir('./sprites/Super Mountain Dusk Files/Layers')):
     super_mountain_dusk.append(pygame.image.load('./sprites/Super Mountain Dusk Files/Layers/'+fname))
-    hsize = true_resize(constants.SCREEN_WIDTH, super_mountain_dusk[-1])
-    super_mountain_dusk[-1] = pygame.transform.scale(super_mountain_dusk[-1], (constants.SCREEN_WIDTH, hsize))
+    hsize = true_resize(SCREEN_WIDTH, super_mountain_dusk[-1])
+    super_mountain_dusk[-1] = pygame.transform.scale(super_mountain_dusk[-1], (SCREEN_WIDTH, hsize))
 
 super_mountain_dusk_parallax_scroll = [0, 2, 3, 5, 5, 8]
 maxwidth = []
 for i in range(len(super_mountain_dusk)):
-    maxwidth.append(math.ceil(constants.SCREEN_WIDTH/super_mountain_dusk[i].get_width())+1+math.ceil(super_mountain_dusk_parallax_scroll[i]))
+    maxwidth.append(math.ceil(SCREEN_WIDTH/super_mountain_dusk[i].get_width())+1+math.ceil(super_mountain_dusk_parallax_scroll[i]))
 
 round_1_ground = pygame.image.load('./sprites/ground.png').convert()
 title = pygame.image.load('./sprites/title.png').convert()
-title = pygame.transform.scale(title, (constants.SCREEN_WIDTH-200, constants.SCREEN_HEIGHT-200)).convert()
-title.set_colorkey(constants.BLACK)
-prompt = constants.FONT_48.render('press any key to start', True, constants.WHITE, None)
-fader = pygame.surface.Surface((constants.SCREEN_WIDTH, constants.SCREEN_HEIGHT)).convert()
-fader.fill(constants.BLACK)
+title = pygame.transform.scale(title, (SCREEN_WIDTH-200, SCREEN_HEIGHT-200)).convert()
+title.set_colorkey(BLACK)
+prompt = FONT_48.render('press any key to start', True, WHITE, None)
+fader = pygame.surface.Surface((SCREEN_WIDTH, SCREEN_HEIGHT)).convert()
+fader.fill(BLACK)
 rob = player.Player()
 borders = []
 
@@ -56,7 +55,7 @@ for i in range(5):
     borders.append([])
     for j in range(4):
         image = pygame.image.load('./sprites/borders.png').convert()
-        image.set_colorkey(constants.BLACK)
+        image.set_colorkey(BLACK)
         image = clip_image(image, (j*64, i*64, 64, 64))
         borders[i].append(image)
 
@@ -64,26 +63,26 @@ for i in range(5):
 def show_fps(screen, clock):
     """utility function to show frames per second"""
     fps = str(int(clock.get_fps()))
-    fps_surface = fps_font.render(fps, True, constants.BLACK)
+    fps_surface = fps_font.render(fps, True, BLACK)
     fps_rect = fps_surface.get_rect()
     fps_rect.topleft = (10, 10)
-    constants.SCREEN.blit(fps_surface, fps_rect)
+    SCREEN.blit(fps_surface, fps_rect)
 
 
 def initialize():
-    centered = (constants.SCREEN_WIDTH//2-studio_image.get_width()//2, constants.SCREEN_HEIGHT//2-studio_image.get_height()//2)
+    centered = (SCREEN_WIDTH//2-studio_image.get_width()//2, SCREEN_HEIGHT//2-studio_image.get_height()//2)
     time.sleep(1)
     for i in range(255):
-        constants.SCREEN.fill(constants.BLACK)
+        SCREEN.fill(BLACK)
         studio_image.set_alpha(i)
-        constants.SCREEN.blit(studio_image, centered)
+        SCREEN.blit(studio_image, centered)
         pygame.display.update()
         time.sleep(0.001)
     time.sleep(1.5)
     for i in range(255, 0, -1):
-        constants.SCREEN.fill(constants.BLACK)
+        SCREEN.fill(BLACK)
         studio_image.set_alpha(i)
-        constants.SCREEN.blit(studio_image, centered)
+        SCREEN.blit(studio_image, centered)
         pygame.display.update()
         time.sleep(0.001)
     time.sleep(1)
@@ -95,15 +94,15 @@ def initial_screen():
     def render(scroll):
         for j in range(len(super_mountain_dusk)):
             for i in range(maxwidth[j]):
-                constants.SCREEN.blit(super_mountain_dusk[j], ((i*super_mountain_dusk[j].get_width())-round(scroll*super_mountain_dusk_parallax_scroll[j]), 0))
-        for i in range(0, math.ceil(constants.SCREEN_WIDTH/round_1_ground.get_width())):
-            constants.SCREEN.blit(round_1_ground, (i*round_1_ground.get_width()-scroll, constants.SCREEN_HEIGHT-round_1_ground.get_height()))
-            constants.SCREEN.blit(round_1_ground, (i*round_1_ground.get_width()-scroll+constants.SCREEN_WIDTH, constants.SCREEN_HEIGHT-round_1_ground.get_height()))
-        constants.SCREEN.blit(pygame.transform.scale2x(rob.image), (0+round_1_ground.get_width()+rob.pos.x, rob.pos.y+75))
-        constants.SCREEN.blit(title, (0, 0))
-        if showing: constants.SCREEN.blit(prompt, (350, 600), special_flags=BLEND_ALPHA_SDL2)
+                SCREEN.blit(super_mountain_dusk[j], ((i*super_mountain_dusk[j].get_width())-round(scroll*super_mountain_dusk_parallax_scroll[j]), 0))
+        for i in range(0, math.ceil(SCREEN_WIDTH/round_1_ground.get_width())):
+            SCREEN.blit(round_1_ground, (i*round_1_ground.get_width()-scroll, SCREEN_HEIGHT-round_1_ground.get_height()))
+            SCREEN.blit(round_1_ground, (i*round_1_ground.get_width()-scroll+SCREEN_WIDTH, SCREEN_HEIGHT-round_1_ground.get_height()))
+        SCREEN.blit(pygame.transform.scale2x(rob.image), (0+round_1_ground.get_width()+rob.pos.x, rob.pos.y+75))
+        SCREEN.blit(title, (0, 0))
+        if showing: SCREEN.blit(prompt, (350, 600), special_flags=BLEND_ALPHA_SDL2)
         fader.set_alpha(fade)
-        constants.SCREEN.blit(fader, (0, 0))
+        SCREEN.blit(fader, (0, 0))
     
     update = pygame.time.get_ticks()
     cooldown = 150
@@ -122,7 +121,7 @@ def initial_screen():
         scroll += 2
         if fade > 0: fade -= 5
 
-        if abs(scroll) > constants.SCREEN_WIDTH:
+        if abs(scroll) > SCREEN_WIDTH:
             scroll = 0
         
         cur += 1
@@ -152,24 +151,24 @@ def menu():
     def render(scroll):
         for j in range(len(super_mountain_dusk)):
             for i in range(maxwidth[j]):
-                constants.SCREEN.blit(super_mountain_dusk[j], ((i*super_mountain_dusk[j].get_width())-round(scroll*super_mountain_dusk_parallax_scroll[j]), 0))
-        for i in range(0, math.ceil(constants.SCREEN_WIDTH/round_1_ground.get_width())):
-            constants.SCREEN.blit(round_1_ground, (i*round_1_ground.get_width(), constants.SCREEN_HEIGHT-round_1_ground.get_height()))
-        constants.SCREEN.blit(pygame.transform.scale2x(rob.image), (0+round_1_ground.get_width()+rob.pos.x, rob.pos.y+75))
-        constants.SCREEN.blit(title, (0, 0))
+                SCREEN.blit(super_mountain_dusk[j], ((i*super_mountain_dusk[j].get_width())-round(scroll*super_mountain_dusk_parallax_scroll[j]), 0))
+        for i in range(0, math.ceil(SCREEN_WIDTH/round_1_ground.get_width())):
+            SCREEN.blit(round_1_ground, (i*round_1_ground.get_width(), SCREEN_HEIGHT-round_1_ground.get_height()))
+        SCREEN.blit(pygame.transform.scale2x(rob.image), (0+round_1_ground.get_width()+rob.pos.x, rob.pos.y+75))
+        SCREEN.blit(title, (0, 0))
         for i in range(len(texts)): 
-            if i == selected: constants.SCREEN.blit(constants.FONT_24.render(texts[i], True, constants.SELECT), (constants.SCREEN_WIDTH//2+250, constants.SCREEN_HEIGHT//2+185+i*50), special_flags=BLEND_ALPHA_SDL2)
-            else: constants.SCREEN.blit(constants.FONT_24.render(texts[i], True, constants.WHITE), (constants.SCREEN_WIDTH//2+250, constants.SCREEN_HEIGHT//2+185+i*50), special_flags=BLEND_ALPHA_SDL2)
+            if i == selected: SCREEN.blit(FONT_24.render(texts[i], True, SELECT), (SCREEN_WIDTH//2+250, SCREEN_HEIGHT//2+185+i*50), special_flags=BLEND_ALPHA_SDL2)
+            else: SCREEN.blit(FONT_24.render(texts[i], True, WHITE), (SCREEN_WIDTH//2+250, SCREEN_HEIGHT//2+185+i*50), special_flags=BLEND_ALPHA_SDL2)
         if controls:
-            borders[3][2] = pygame.transform.scale(borders[3][2], (constants.SCREEN_WIDTH-200, hsize-100))
-            controltext = constants.FONT_24.render('Controls', True, constants.WHITE)
-            constants.SCREEN.blit(borders[3][2], (100, 100))
-            constants.SCREEN.blit(controltext, (100+round(borders[3][2].get_width()/2-controltext.get_width()/2), 185), special_flags=BLEND_ALPHA_SDL2)
+            borders[3][2] = pygame.transform.scale(borders[3][2], (SCREEN_WIDTH-200, hsize-100))
+            controltext = FONT_24.render('Controls', True, WHITE)
+            SCREEN.blit(borders[3][2], (100, 100))
+            SCREEN.blit(controltext, (100+round(borders[3][2].get_width()/2-controltext.get_width()/2), 185), special_flags=BLEND_ALPHA_SDL2)
             for i in range(len(controlrenders)):
-                constants.SCREEN.blit(controlrenders[i][2], controlrenders[i][1], special_flags=BLEND_ALPHA_SDL2)
-                text = constants.FONT_16.render(controlrenders[i][0], True, constants.WHITE)
-                if controlrenders[i][1][0] < 300: constants.SCREEN.blit(text, (controlrenders[i][1][0]+controlrenders[i][2].get_width()+15, controlrenders[i][1][1]+round(controlrenders[i][2].get_height()/2-text.get_height()/2)), special_flags=BLEND_ALPHA_SDL2)
-                else: constants.SCREEN.blit(text, (controlrenders[i][1][0]-text.get_width()-15, controlrenders[i][1][1]+10), special_flags=BLEND_ALPHA_SDL2)
+                SCREEN.blit(controlrenders[i][2], controlrenders[i][1], special_flags=BLEND_ALPHA_SDL2)
+                text = FONT_16.render(controlrenders[i][0], True, WHITE)
+                if controlrenders[i][1][0] < 300: SCREEN.blit(text, (controlrenders[i][1][0]+controlrenders[i][2].get_width()+15, controlrenders[i][1][1]+round(controlrenders[i][2].get_height()/2-text.get_height()/2)), special_flags=BLEND_ALPHA_SDL2)
+                else: SCREEN.blit(text, (controlrenders[i][1][0]-text.get_width()-15, controlrenders[i][1][1]+10), special_flags=BLEND_ALPHA_SDL2)
         
     texts = ["new game", "view controls", "quit game"]
     
@@ -213,6 +212,7 @@ def menu():
                 if selected > 2: selected = 0
                 elif selected < 0: selected = 2
                 if event.key == K_RETURN and selected == 0:
+                    GAME_STATE = 'awaken'
                     return
                 if event.key == K_RETURN and selected == 1:
                     controls = True
@@ -226,7 +226,7 @@ def menu():
                 quit()
         scroll += 2
 
-        if abs(scroll) > constants.SCREEN_WIDTH:
+        if abs(scroll) > SCREEN_WIDTH:
             scroll = 0
 
         if pygame.time.get_ticks() - update >= cooldown:
