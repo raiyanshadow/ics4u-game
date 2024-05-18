@@ -1,5 +1,6 @@
 import pygame, os
 
+globals = globals(); 
 GAME_STATE = 'initializing'
 ISPAUSED = False
 SCREEN_HEIGHT = 728
@@ -7,6 +8,7 @@ SCREEN_WIDTH = 1024
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 SELECT = (217, 172, 67)
+RED = (255, 0, 0)
 SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.font.init()
 FONT_48 = pygame.font.Font('font/PixeloidSans.ttf', 48)

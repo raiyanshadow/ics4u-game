@@ -40,27 +40,36 @@ class Player(pygame.sprite.Sprite):
     time.sleep(0.01)
     self.attack_type = self.state
     if self.state == 'attackA':
-        self.attacking = 12
+        self.attacking = 15
     elif self.state == 'attackB':
         self.attacking = 13
 
   def update(self, pressed_keys):
+
+    if constants.GAME_STATE == 'paused':
+       return
+
     self.acc = vec(0, 0)
     
     if constants.GAME_STATE == 'initializing':
       self.state = 'start'
+    
+    if pressed_keys[K_x]:
+       self.attack()
 
     if pressed_keys[K_LEFT]:
         if self.facing:
             self.facing = False
         self.state = 'walk'
-        self.acc.x = -0.3
+        self.acc.x = -0.1
         
     elif pressed_keys[K_RIGHT]:
         if not self.facing:
            self.facing = True
         self.state = 'walk'
-        self.acc.x = 0.3
+        self.acc.x = 0.1
+    
+    
         
     else:
         self.state = 'idle'
@@ -70,12 +79,14 @@ class Player(pygame.sprite.Sprite):
     elif self.rect.left <= constants.SCROLL_THRESH:
        constants.SCROLL = 3.5
     
-    self.acc += self.vel * -0.05  # friction = 0.12
-    self.vel += self.acc
-    self.pos += self.vel + 0.5 * self.acc
+    self.acc += self.vel * -0.05  # friction = 0.05
+    self.vel.x += self.acc.x
+    if 0 < abs(self.vel.x) < 0.01:
+       self.vel.x = 0
+    self.pos.x += self.vel.x + 0.5 * self.acc.x
 
-    if self.pos.x+self.size[0]*3 >= constants.SCREEN_WIDTH:
-        self.pos.x = constants.SCREEN_WIDTH-self.size[0]*3
+    if self.pos.x+self.size[0]*2 >= constants.SCREEN_WIDTH:
+        self.pos.x = constants.SCREEN_WIDTH-self.size[0]*2
     if self.pos.x <= 0:
         self.pos.x = 0
 
