@@ -1,4 +1,4 @@
-import player, enemy, pygame, random, math, time, os, sys
+import player, enemy, pygame, random, math, time, os, sys, barrier_line, healthbar
 from constants import *
 from pygame.locals import *
 global update
@@ -175,16 +175,6 @@ def initial_screen():
         if cur >= 100:
             showing = not showing
             cur = 0
-
-        if pygame.time.get_ticks() - update >= cooldown:
-            if rob.attacking > 1:
-                rob.state = rob.attack_type
-                cooldown = 90
-                rob.attacking -= 1
-            else:
-                cooldown = 150
-            update = pygame.time.get_ticks()
-            animate()
         render(scroll)
         pygame.display.flip()
 
@@ -238,7 +228,6 @@ def menu():
                 pygame.quit()
                 quit()
         
-        if pygame.time.get_ticks() - update >= cooldown: update = pygame.time.get_ticks(); animate()
         scroll += 0.2
 
         if abs(scroll) > SCREEN_WIDTH:
@@ -247,7 +236,7 @@ def menu():
         render(scroll)
         
         pygame.display.flip()
-        clockobject.tick(60)
+        clockobject.tick(FRAMES)
 
 def fadeout():
     fade = 0
@@ -275,9 +264,6 @@ def fadeout():
     while fade < 255:
         fade += 5
         update()
-        if pygame.time.get_ticks() -  update_ticks >= 150: 
-            animate()
-            update_ticks = pygame.time.get_ticks()
         pygame.display.flip()
         clockobject.tick(60)
     fade = 0
@@ -291,11 +277,17 @@ def play():
     rob_profile = pygame.transform.scale(rob_profile, (rob_profile.get_width()*3, rob_profile.get_height()*3))
     stagex = SCREEN_WIDTH*2
     stageposx = 0
+    hbar = healthbar.HealthBar(0, 0, rob)
+
+    startscrollingposx = SCREEN_WIDTH/2
+
+    playerposx = SCREEN_WIDTH/2-rob_profile.get_width()/2
     fade = 255
     SCREEN.fill((0,0,0))
     scroll = 0
     clockobject = pygame.time.Clock()
     rob.pos = pygame.Vector2(SCREEN_WIDTH/2-rob.image.get_width()/2, rob.pos.y+round_1_ground.get_height()-55)
+    rob.rect = rob.image.get_rect(center = rob.pos)
     hsize = true_resize(600, borders[1][2])
     paused = False
     pausetexts = ['resume', 'view controls', 'quit to main menu', 'quit to desktop']
@@ -304,6 +296,9 @@ def play():
     selected = 0
     selected2 = 0
     warning = False
+    
+    barrierleft = pygame.draw.rect(SCREEN, WHITE, (20, 0, 5, SCREEN_HEIGHT))
+    barrierright = pygame.draw.rect(SCREEN, WHITE, (SCREEN_WIDTH-20, 0, 5, SCREEN_HEIGHT))
     def render(scroll):
         if GAME_STATE == 'paused': 
             if controls:
@@ -333,22 +328,33 @@ def play():
         b_img = pygame.transform.scale2x(borders[0][0])
         p_img = clip_image(rob.image, (56,6,29,23))
         p_img = pygame.transform.scale(p_img, (p_img.get_width()*3, p_img.get_height()*3))
+        hbar.update()
         SCREEN.blit(b_img, (25, 25))
         SCREEN.blit(p_img, (25 + b_img.get_width()/2 - rob_profile.get_width()/2, p_img.get_height()))
         if rob.facing: SCREEN.blit(pygame.transform.scale2x(rob.image), rob.pos)
         else: SCREEN.blit(pygame.transform.flip(pygame.transform.scale2x(rob.image), True, False), rob.pos)
         fader.set_alpha(fade)
         SCREEN.blit(fader, (0, 0))
+        
         return True
         
-    update = pygame.time.get_ticks()
+    updatea = pygame.time.get_ticks()
+    updateb = pygame.time.get_ticks()
+    JUMP_TIMER = pygame.time.get_ticks()
     cooldown = 150
+    fps = 150
     while True:
-        for event in pygame.event.get():
+        x = pygame.event.get()
+        for event in x:
             if event.type == QUIT:
                 pygame.quit()
                 quit()
             if event.type == KEYDOWN:
+                if event.key == K_z:
+                    rob.a_frame = 0
+                    rob.jumping = True
+                    rob.jumpinganim = len(rob.sprites['jump'])
+
                 if event.key == K_ESCAPE:
                     if controls:
                         controls = False
@@ -389,31 +395,54 @@ def play():
                         if selected == 3:
                             pygame.quit()
                             quit()
-        rob.update(pygame.key.get_pressed())
+                if event.key == K_x and not rob.attackBool:
+                    rob.attack()
+            if event.type == MOUSEBUTTONDOWN:
+                rob.hurt()
+        rob.update(pygame.key.get_pressed(), JUMP_TIMER)
         if fade > 0: fade -= 0.5
-        if pygame.time.get_ticks() - update >= cooldown:
+        if pygame.time.get_ticks() - updatea > fps:
+            if rob.state == 'walk':
+                fps = 150
             if rob.attacking > 1:
-                rob.state = rob.attack_type
-                cooldown = 75
                 rob.attacking -= 1
-            else:
-                cooldown = 150
-            update = pygame.time.get_ticks()
+                rob.state = rob.attack_type
+                fps = 50
+            if rob.attacking == 1 and rob.attackBool:
+                rob.attackBool = False
+                rob.state = 'idle'
+            if rob.hurting > 1:
+                rob.hurting -= 1
+                rob.state = 'hurt'
+                fps = 100
+            if rob.jumping == True:
+                fps = 15
+                rob.state = 'jump'
+                if rob.vel.y > 0:
+                    rob.jumpinganim = min(rob.jumpinganim-1, 8)
+                    rob.a_frame -= 1
+                    
+                if rob.pos.y == SCREEN_HEIGHT - round_1_ground.get_height(): rob.jumpinganim = max(rob.jumpinganim-1, 0)
+                rob.state = 'jump'
+                rob.pos.y -= rob.vel.y
+                rob.vel.y -= GRAVITY
+                if rob.vel.y < -rob.jumpheight:
+                    rob.jumping = False
+                    rob.vel.y = rob.jumpheight
+            if not rob.hurting > 1 and not rob.attackBool and rob.state != 'walk' and rob.state != 'jump':
+                rob.state = 'idle'
+                fps = 150
             animate()
+            updatea = pygame.time.get_ticks()
+        
         if not render(scroll): 
             show_fps(SCREEN, clockobject)
             pygame.display.flip()
-            clockobject.tick(144)
+            clockobject.tick(FRAMES)
             continue
-            
-        if int(stageposx) > 50 and rob.facing: rob.vel.x = 0
-        elif int(stageposx) < -50 and not rob.facing: rob.vel.x = 0
-        elif rob.vel.x != 0: scroll += int(rob.vel.x/abs(rob.vel.x))*0.2; stageposx += int(rob.vel.x/abs(rob.vel.x))*0.2
-        
-        
         show_fps(SCREEN, clockobject)
         pygame.display.flip()
-        clockobject.tick(144)
+        clockobject.tick(FRAMES)
 
 clockobject = pygame.time.Clock()
 
