@@ -12,7 +12,7 @@ def extract(fname):
    return res
 
 class Player(pygame.sprite.Sprite):
-   sprites = {'idle':[], 'walk':[], 'attackA':[], 'attackB':[], 'start':[], 'hurt': [], 'dead': [], 'jump':[], 'fall':[]}
+   sprites = {'idle':[], 'walk':[], 'attackA':[], 'attackB':[], 'start':[], 'hurt': [], 'deathanimation': [], 'jump':[]}
    for fname in os.listdir('./sprites/rob'):
       if fname.endswith('.png'):
          sprites[extract(fname.split('_')[1].replace('.png', ''))].append('./sprites/rob/'+fname)
@@ -44,6 +44,7 @@ class Player(pygame.sprite.Sprite):
       self.jumpheight = self.vel.y
       self.jumping = False
       self.jumpinganim = 1
+      self.dead = False
 
    def attack(self):
       self.a_frame = 0
@@ -57,6 +58,9 @@ class Player(pygame.sprite.Sprite):
       self.state = 'hurt'
       self.hp -= 10
       self.hurting = len(self.sprites[self.state])
+      if self.hp <= 0 and self.dead == False:
+         self.a_frame
+         self.state = 'deathanimation'
 
    def update(self, pressed_keys, event_update):
 

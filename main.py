@@ -3,6 +3,8 @@ from constants import *
 from pygame.locals import *
 global update
 
+done = False
+
 def true_resize(target_width, original_image):
     size = original_image.get_width()*original_image.get_height()
     wpercent = target_width / float(size)
@@ -10,7 +12,13 @@ def true_resize(target_width, original_image):
     return hsize
 
 def animate():
-    rob.a_frame = (rob.a_frame + 1) % len(rob.sprites[rob.state])
+    if rob.state == 'deathanimation':
+        rob.a_frame = min(rob.a_frame+1, len(rob.sprites[rob.state])-1)
+        if rob.a_frame == len(rob.sprites[rob.state])-1 and not done:
+            death_done = pygame.time.get_ticks()
+            rob.dead = True
+            done = True
+    else: rob.a_frame = (rob.a_frame + 1) % len(rob.sprites[rob.state])
     rob.image = pygame.image.load(rob.sprites[rob.state][rob.a_frame]).convert_alpha()
     rob.image.set_colorkey(pygame.SRCCOLORKEY)
     rob.size = rob.image.get_size()
@@ -19,6 +27,11 @@ def animate():
 def clip_image(image, clip):
     image.set_clip(clip)
     return image.subsurface(image.get_clip())
+
+def gaussian_blur(surface, radius):
+    scaled_surface = pygame.transform.smoothscale(surface, (surface.get_width() // radius, surface.get_height() // radius))
+    scaled_surface = pygame.transform.smoothscale(scaled_surface, (surface.get_width(), surface.get_height()))
+    return scaled_surface
 
 def show_fps(screen, clock):
     """utility function to show frames per second"""
@@ -178,6 +191,8 @@ def initial_screen():
         render(scroll)
         pygame.display.flip()
 
+death_done = 0
+
 def menu():
     global scroll
     global GAME_STATE
@@ -270,7 +285,7 @@ def fadeout():
 
     GAME_STATE = 'playing'
     return
-
+deathfade = 0
 def play():
     global GAME_STATE, controls
     rob_profile = pygame.image.load(os.path.join('sprites', 'rob_profile.png')).convert_alpha()
@@ -296,10 +311,12 @@ def play():
     selected = 0
     selected2 = 0
     warning = False
+    rad = 0.1
     
     barrierleft = pygame.draw.rect(SCREEN, WHITE, (20, 0, 5, SCREEN_HEIGHT))
     barrierright = pygame.draw.rect(SCREEN, WHITE, (SCREEN_WIDTH-20, 0, 5, SCREEN_HEIGHT))
     def render(scroll):
+        global fader
         if GAME_STATE == 'paused': 
             if controls:
                 draw_controls(borders)
@@ -333,9 +350,14 @@ def play():
         SCREEN.blit(p_img, (25 + b_img.get_width()/2 - rob_profile.get_width()/2, p_img.get_height()))
         if rob.facing: SCREEN.blit(pygame.transform.scale2x(rob.image), rob.pos)
         else: SCREEN.blit(pygame.transform.flip(pygame.transform.scale2x(rob.image), True, False), rob.pos)
+        if rob.dead: 
+            if pygame.time.get_ticks() - death_done > 1000:
+                fader = pygame.surface.Surface((SCREEN_WIDTH, SCREEN_HEIGHT)).convert()
+                fader.fill(BLACK)
+                fader.set_alpha(fade)
+                SCREEN.blit(fader, (0, 0))
         fader.set_alpha(fade)
         SCREEN.blit(fader, (0, 0))
-        
         return True
         
     updatea = pygame.time.get_ticks()
@@ -402,6 +424,7 @@ def play():
         rob.update(pygame.key.get_pressed(), JUMP_TIMER)
         if fade > 0: fade -= 0.5
         if pygame.time.get_ticks() - updatea > fps:
+            
             if rob.state == 'walk':
                 fps = 150
             if rob.attacking > 1:
@@ -411,7 +434,7 @@ def play():
             if rob.attacking == 1 and rob.attackBool:
                 rob.attackBool = False
                 rob.state = 'idle'
-            if rob.hurting > 1:
+            if rob.hurting > 1 and rob.hp > 0:
                 rob.hurting -= 1
                 rob.state = 'hurt'
                 fps = 100
@@ -429,10 +452,20 @@ def play():
                 if rob.vel.y < -rob.jumpheight:
                     rob.jumping = False
                     rob.vel.y = rob.jumpheight
-            if not rob.hurting > 1 and not rob.attackBool and rob.state != 'walk' and rob.state != 'jump':
+            if not rob.hurting > 1 and not rob.attackBool and rob.state != 'walk' and rob.state != 'jump' and rob.state != 'deathanimation':
                 rob.state = 'idle'
                 fps = 150
-            animate()
+            if rob.state == 'deathanimation':
+                fps = 3
+                rob.state = 'deathanimation'
+            if rob.dead:
+                fps = 50
+                fade = max(fade - 1, 155)
+                if fade == 155:
+                    deathfade = min(deathfade + 2, 255)
+                if deathfade == 255:
+                    GAME_STATE = 'game over'
+            if rob.state != 'deathanimation': rob.animate()
             updatea = pygame.time.get_ticks()
         
         if not render(scroll): 
@@ -440,6 +473,8 @@ def play():
             pygame.display.flip()
             clockobject.tick(FRAMES)
             continue
+        
+        
         show_fps(SCREEN, clockobject)
         pygame.display.flip()
         clockobject.tick(FRAMES)
