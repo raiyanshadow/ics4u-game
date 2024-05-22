@@ -40,6 +40,7 @@ class Player(pygame.sprite.Sprite):
       self.acc = vec(0, 0)
       self.mask = pygame.mask.from_surface(self.bigger_img)
       self.hp = 100
+      self.maxhp = 100
       self.iframes = FRAMES*3
       self.jumpheight = self.vel.y
       self.jumping = False
@@ -59,7 +60,7 @@ class Player(pygame.sprite.Sprite):
       self.hp -= 10
       self.hurting = len(self.sprites[self.state])
       if self.hp <= 0 and self.dead == False:
-         self.a_frame
+         self.dead = True
          self.state = 'deathanimation'
 
    def update(self, pressed_keys, event_update):

@@ -11,7 +11,7 @@ class HealthBar():
         self.h = (39-23)*1.5
         self.rect = (self.x, self.y, self.w, self.h)
         self.hp = play.hp
-        self.max = play.hp
+        self.max = play.maxhp
         self.play = play
 
     def draw(self):
