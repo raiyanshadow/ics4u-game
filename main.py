@@ -467,28 +467,30 @@ def play():
         clockobject.tick(FRAMES)
 
 def death():
-    global fader, fade
-    fader = pygame.surface.Surface((SCREEN_WIDTH, SCREEN_HEIGHT)).convert()
+    global fader, fade, GAME_STATE
     fadebg = 0
+    fade = 0
     rob_profile = pygame.image.load(os.path.join('sprites', 'rob_profile.png')).convert_alpha()
     rob_profile = pygame.transform.scale(rob_profile, (rob_profile.get_width()*3, rob_profile.get_height()*3))
     hbar = healthbar.HealthBar(0, 0, rob)
+    rob.pos.y += 15
     playerposx = rob.pos.x
     SCREEN.fill((0,0,0))
     clockobject = pygame.time.Clock()
     hsize = true_resize(600, borders[1][2])
-    warningtexts = ['yes', 'no']
+    texts = ['quit to menu', 'quit to desktop']
     controls = False
     selected = 0
     rad = 0.1
     scroll = 0
-    timer = [0] * 4
+    timer = [0] * 6
     animdone = False
-    timerbool = [False] * 4
+    timerbool = [False] * 5
     rob.a_frame = 0
     death = pygame.image.load(os.path.join('sprites', 'death.png')).convert_alpha()
     death = pygame.transform.scale(death, (SCREEN_WIDTH, death.get_height()))
     death.set_alpha(0)
+    selected = 0
                         
     def render(scroll):
         draw_bg(scroll)
@@ -503,14 +505,11 @@ def death():
     def parta():
         global animdone
         render(scroll)
-        print(rob.a_frame, len(rob.sprites[rob.state])-1)
         rob.state = 'deathanimation'
         rob.a_frame = min(rob.a_frame+1, len(rob.sprites[rob.state])-1)
-        if rob.a_frame == len(rob.sprites[rob.state])-1:
-            print('anim done')
-            animdone = True
         rob.image = pygame.image.load(rob.sprites[rob.state][rob.a_frame]).convert_alpha()
         SCREEN.blit(pygame.transform.scale2x(rob.image), rob.pos)
+        pygame.display.flip()
     
     def partb():
         render(scroll)
@@ -520,6 +519,7 @@ def death():
         SCREEN.blit(pygame.transform.scale2x(rob.image), rob.pos)
         fader.set_alpha(fadebg)
         SCREEN.blit(fader, (0, 0))
+        pygame.display.flip()
         
     def partc():
         render(scroll)
@@ -531,21 +531,44 @@ def death():
         SCREEN.blit(fader, (0, 0))
         death.set_alpha(fade)
         SCREEN.blit(death, (0, SCREEN_HEIGHT//2 - death.get_height()//2))
+        pygame.display.flip()
+
+    def partd():
+        render(scroll)
+        rob.state = 'deathanimation'
+        rob.a_frame = len(rob.sprites[rob.state])-1
+        rob.image = pygame.image.load(rob.sprites[rob.state][rob.a_frame]).convert_alpha()
+        SCREEN.blit(pygame.transform.scale2x(rob.image), rob.pos)
+        fader.set_alpha(fadebg)
+        SCREEN.blit(fader, (0, 0))
+        death.set_alpha(fade)
+        SCREEN.blit(death, (0, SCREEN_HEIGHT//2 - death.get_height()//2))
+        for i in range(len(texts)):
+            text = 0
+            if i == selected: 
+                text = FONT_24.render(texts[i], True, SELECT)
+            else: 
+                text = FONT_24.render(texts[i], True, WHITE)
+            SCREEN.blit(text, (430*i+200, SCREEN_HEIGHT//2+155), special_flags=BLEND_ALPHA_SDL2)
+        pygame.display.flip()
         
     timer[0] = pygame.time.get_ticks()
     while animdone == False:
-        if pygame.time.get_ticks() - timer[0] > 500:
+        if pygame.time.get_ticks() - timer[0] > 400:
             if animdone:
                 break
-            print("done")
             timer[0] = pygame.time.get_ticks()
             parta()
             continue
+        if rob.a_frame == len(rob.sprites[rob.state])-1:
+            animdone = True
+        
     timer[1] = pygame.time.get_ticks()
     while not timerbool[0]:
         if pygame.time.get_ticks() - timer[1] > 250:
             timer[1] = pygame.time.get_ticks()
             timerbool[0] = True
+    
     timer[2] = pygame.time.get_ticks()
     while not timerbool[1]:
         if fadebg == 124:
@@ -555,14 +578,52 @@ def death():
                 timer[2] = pygame.time.get_ticks()
                 fadebg = min(fadebg+2, 124)
                 partb()
+    timer[3] = pygame.time.get_ticks()
     while not timerbool[2]:
-        if pygame.time.get_ticks() - timerd > 250:
-            timerd = pygame.time.get_ticks()
-            timer[2] = True
-    while not timerbool[3]:
-        if pygame.time.get_ticks() - timer[3] > 25:
+        if pygame.time.get_ticks() - timer[3] > 250:
             timer[3] = pygame.time.get_ticks()
+            timerbool[2] = True
+    timer[4] = pygame.time.get_ticks()
+    while not timerbool[3]:
+        if pygame.time.get_ticks() - timer[4] > 25:
+            timer[4] = pygame.time.get_ticks()
             fade = min(fade+5, 255)
+            partc()
+        if fade == 255: timerbool[3] = True
+    timer[5] = pygame.time.get_ticks()
+    while not timerbool[4]:
+        if pygame.time.get_ticks() - timer[5] > 1000:
+            timer[5] = pygame.time.get_ticks()
+            timerbool[4] = True
+        
+    
+    while True:
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+                if event.key == K_RIGHT:
+                    selected += 1
+                    if selected >= len(texts): selected = 0
+                if event.key == K_LEFT:
+                    selected -= 1
+                    if selected < 0: selected = len(texts)-1
+                if event.key == K_RETURN:
+                    if selected == 0:
+                        GAME_STATE = 'menu'
+                        rob.state = 'idle'
+                        rob.pos = pygame.Vector2(SCREEN_WIDTH//2, SCREEN_HEIGHT-64*3)
+                        rob.hp = 100
+                        rob.dead = False
+                        rob.hurting = 1
+                        rob.a_frame = 0
+                        rob.jumping = False
+                        rob.jumpinganim = 1
+                        rob.attacking = 1
+                        return
+                    else:
+                        pygame.quit()
+                        quit()
+        partd()
+        
             
 clockobject = pygame.time.Clock()
 
