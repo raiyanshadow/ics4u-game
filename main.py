@@ -41,9 +41,15 @@ def draw_bg(scroll):
                 SCREEN.blit(super_mountain_dusk[j], ((i*super_mountain_dusk[j].get_width())-round(scroll*super_mountain_dusk_parallax_scroll[j]), 0))
 
 def draw_ground(scroll):
-    for i in range(0, math.ceil(SCREEN_WIDTH/round_1_ground.get_width())):
+    for i in range(0, math.ceil(SCREEN_WIDTH/round_1_ground[0][0].get_width())):
         for j in range(-1, 2, 1):
-            SCREEN.blit(round_1_ground, (i*round_1_ground.get_width()-scroll*5-SCREEN_WIDTH*j, SCREEN_HEIGHT-round_1_ground.get_height()))
+            SCREEN.blit(round_1_ground[0][1], (i*round_1_ground[0][1].get_width()-scroll*5-SCREEN_WIDTH*j, SCREEN_HEIGHT-round_1_ground[0][1].get_height()))
+            
+def draw_floats(scroll, floating):
+    for i in range(len(floating)):
+        for j in range(len(floating[i])):
+            if floating[i][j] != 0:
+                SCREEN.blit(round_1_ground[floating[i][j][0]][floating[i][j][1]], (i*round_1_ground[0][0].get_width(), j*round_1_ground[0][0].get_height()))
 
 def draw_controls(borders):
     hsize = true_resize(600, borders[0][0])
@@ -96,10 +102,13 @@ maxwidth = []
 for i in range(len(super_mountain_dusk)):
     maxwidth.append(math.ceil(SCREEN_WIDTH/super_mountain_dusk[i].get_width())+1+math.ceil(super_mountain_dusk_parallax_scroll[i]))
 
-round_1_ground = pygame.image.load('./sprites/ground_big.png').convert()
-round_1_ground.set_colorkey(WHITE)
-round_1_ground = clip_image(round_1_ground, (32, 0, 32, 32))
-round_1_ground = pygame.transform.scale(round_1_ground, (64, 64))
+tmp = pygame.image.load('./sprites/ground_big.png').convert() 
+round_1_ground = [[clip_image(tmp, (i*32, j*32, 32, 32)) for j in range(3)] for i in range(3)]
+for i in range(len(round_1_ground)):
+    for j in range(len(round_1_ground[i])):
+        round_1_ground[i][j].set_colorkey(BLACK)
+        round_1_ground[i][j] = pygame.transform.scale(round_1_ground[i][j], (64, 64))
+
 title = pygame.image.load('./sprites/title.png').convert()
 title = pygame.transform.scale(title, (SCREEN_WIDTH-200, SCREEN_HEIGHT-200)).convert()
 title.set_colorkey(BLACK)
@@ -295,7 +304,7 @@ def play():
     SCREEN.fill((0,0,0))
     scroll = 0
     clockobject = pygame.time.Clock()
-    rob.pos = pygame.Vector2(SCREEN_WIDTH/2-rob.image.get_width()/2, rob.pos.y+round_1_ground.get_height()-55)
+    rob.pos = pygame.Vector2(SCREEN_WIDTH/2-rob.image.get_width()/2, rob.pos.y+round_1_ground[0][0].get_height()-55)
     rob.rect = rob.image.get_rect(center = rob.pos)
     hsize = true_resize(600, borders[1][2])
     paused = False
@@ -306,10 +315,12 @@ def play():
     selected2 = 0
     warning = False
     rad = 0.1
-    
+    floating = [[0]*(SCREEN_WIDTH//round_1_ground[0][0].get_width())]*(SCREEN_HEIGHT//round_1_ground[0][0].get_height())
+    floating[len(floating)-1][4:8] = [(0, 1)]*4
+    floating[len(floating)-1][16:20] = [(0, 1)]*4
     barrierleft = pygame.draw.rect(SCREEN, WHITE, (20, 0, 5, SCREEN_HEIGHT))
     barrierright = pygame.draw.rect(SCREEN, WHITE, (SCREEN_WIDTH-20, 0, 5, SCREEN_HEIGHT))
-    def render(scroll):
+    def render(scroll, floating):
         global fader
         if GAME_STATE == 'paused': 
             if controls:
@@ -336,6 +347,7 @@ def play():
             return False
         draw_bg(scroll)
         draw_ground(scroll)
+        draw_floats(scroll, floating)
         b_img = pygame.transform.scale2x(borders[0][0])
         p_img = clip_image(rob.image, (56,6,29,23))
         p_img = pygame.transform.scale(p_img, (p_img.get_width()*3, p_img.get_height()*3))
@@ -441,7 +453,7 @@ def play():
                     rob.jumpinganim = min(rob.jumpinganim-1, 8)
                     rob.a_frame -= 1
                     
-                if rob.pos.y == SCREEN_HEIGHT - round_1_ground.get_height(): rob.jumpinganim = max(rob.jumpinganim-1, 0)
+                if rob.pos.y == SCREEN_HEIGHT - round_1_ground[0][1].get_height(): rob.jumpinganim = max(rob.jumpinganim-1, 0)
                 rob.state = 'jump'
                 rob.pos.y -= rob.vel.y
                 rob.vel.y -= GRAVITY
@@ -455,7 +467,7 @@ def play():
             animate()
             updatea = pygame.time.get_ticks()
         
-        if not render(scroll): 
+        if not render(scroll, floating): 
             show_fps(SCREEN, clockobject)
             pygame.display.flip()
             clockobject.tick(FRAMES)
