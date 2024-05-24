@@ -18,5 +18,5 @@ class Ground(pygame.sprite.Sprite):
         
         
     def draw(self):
-        SCREEN.blit(self.mask.to_surface(setcolor=(255, 255, 255, 0), unsetcolor=(0, 0, 0, 0)), self.rect)
+        #SCREEN.blit(self.mask.to_surface(setcolor=(255, 255, 255, 0), unsetcolor=(0, 0, 0, 0)), self.rect)
         SCREEN.blit(self.image, self.rect)

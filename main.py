@@ -14,11 +14,9 @@ def true_resize(target_width, original_image):
 
 def animate():
     if not rob.dead: rob.a_frame = (rob.a_frame + 1) % len(rob.sprites[rob.state])
-    rob.image = pygame.image.load(rob.sprites[rob.state][rob.a_frame]).convert_alpha()
+    rob.image = rob.sprites[rob.state][rob.a_frame]
     rob.mask = pygame.mask.from_surface(rob.image)
-    rob.image.set_colorkey(pygame.SRCCOLORKEY)
     rob.size = rob.image.get_size()
-    rob.bigger_img = pygame.transform.scale(rob.image, (rob.size[0]*3, rob.size[1]*3))
 
 def show_fps(screen, clock):
     """utility function to show frames per second"""
@@ -278,8 +276,7 @@ def play():
     SCREEN.fill((0,0,0))
     scroll = 0
     clockobject = pygame.time.Clock()
-    rob.pos = pygame.Vector2(SCREEN_WIDTH/2-rob.image.get_width()/2, rob.pos.y)
-    rob.rect = rob.image.get_rect(center = rob.pos)
+    rob.rect = rob.image.get_rect(topleft = pygame.Vector2(SCREEN_WIDTH/2-rob.image.get_width()/2, rob.rect.y))
     hsize = true_resize(600, borders[1][2])
     paused = False
     pausetexts = ['resume', 'view controls', 'quit to main menu', 'quit to desktop']
@@ -333,11 +330,11 @@ def play():
         SCREEN.blit(b_img, (25, 25))
         SCREEN.blit(p_img, (25 + b_img.get_width()/2 - rob_profile.get_width()/2, p_img.get_height()))
         if rob.facing: 
-            SCREEN.blit(pygame.transform.scale2x(rob.mask.to_surface(setcolor=(255, 255, 255, 255), unsetcolor=(0, 0, 0, 0))), rob.pos)
-            SCREEN.blit(pygame.transform.scale2x(rob.image), rob.pos)
+            SCREEN.blit(rob.mask.to_surface(setcolor=(255, 255, 255, 255), unsetcolor=(0, 0, 0, 0)), rob.rect)
+            SCREEN.blit(rob.image, rob.rect)
         else: 
-            SCREEN.blit(pygame.transform.flip(pygame.transform.scale2x(rob.mask.to_surface(setcolor=(255, 255, 255, 255), unsetcolor=(0, 0, 0, 0))), True, False), rob.pos)
-            SCREEN.blit(pygame.transform.flip(pygame.transform.scale2x(rob.image), True, False), rob.pos)
+            SCREEN.blit(pygame.transform.flip(rob.mask.to_surface(setcolor=(255, 255, 255, 255), unsetcolor=(0, 0, 0, 0)), True, False), rob.rect)
+            SCREEN.blit(pygame.transform.flip(rob.image, True, False), rob.rect)
         if rob.dead: 
             if pygame.time.get_ticks() - death_done > 1000:
                 fader = pygame.surface.Surface((SCREEN_WIDTH, SCREEN_HEIGHT)).convert()
@@ -436,9 +433,9 @@ def play():
                     rob.jumpinganim = min(rob.jumpinganim-1, 8)
                     rob.a_frame -= 1
                     
-                if rob.pos.y == SCREEN_HEIGHT - 545: rob.jumpinganim = max(rob.jumpinganim-1, 0)
+                if rob.rect.y == SCREEN_HEIGHT - 545: rob.jumpinganim = max(rob.jumpinganim-1, 0)
                 rob.state = 'jump'
-                rob.pos.y -= rob.vel.y
+                rob.rect.y -= rob.vel.y
                 rob.vel.y -= GRAVITY
                 if rob.vel.y < -rob.jumpheight:
                     rob.jumping = False
@@ -456,11 +453,14 @@ def play():
             pygame.display.flip()
             clockobject.tick(FRAMES)
             continue
-
-        if rob.jumping: 
-            for pieces in ground_group:
-                if pygame.sprite.collide_mask(rob, pieces):
-                    rob.jumping = False
+        i = 1
+        for obstacle in ground_group:
+            collision = pygame.sprite.collide_mask(rob, obstacle)
+            if collision:
+                SCREEN.blit(FONT_24.render('hit', True, WHITE), (SCREEN_WIDTH//2, 0))
+                SCREEN.blit(FONT_24.render(f"{pygame.Vector2(obstacle.rect.x, obstacle.rect.y) - pygame.Vector2(rob.rect.x, rob.rect.y)}", True, WHITE), (SCREEN_WIDTH//2, 24*i))
+                pygame.draw.circle(SCREEN, (255, 0, 0), pygame.Vector2(rob.rect.x, rob.rect.y) + pygame.Vector2(collision[0], collision[1]), 25)
+                i += 1
         
         show_fps(SCREEN, clockobject)
         pygame.display.flip()
@@ -473,8 +473,8 @@ def death():
     rob_profile = pygame.image.load(os.path.join('sprites', 'rob_profile.png')).convert_alpha()
     rob_profile = pygame.transform.scale(rob_profile, (rob_profile.get_width()*3, rob_profile.get_height()*3))
     hbar = healthbar.HealthBar(0, 0, rob)
-    rob.pos.y += 15
-    playerposx = rob.pos.x
+    rob.rect.y += 15
+    playerposx = rob.rect.x
     SCREEN.fill((0,0,0))
     clockobject = pygame.time.Clock()
     hsize = true_resize(600, borders[1][2])
@@ -507,7 +507,7 @@ def death():
         rob.state = 'deathanimation'
         rob.a_frame = min(rob.a_frame+1, len(rob.sprites[rob.state])-1)
         rob.image = pygame.image.load(rob.sprites[rob.state][rob.a_frame]).convert_alpha()
-        SCREEN.blit(pygame.transform.scale2x(rob.image), rob.pos)
+        SCREEN.blit(pygame.transform.scale2x(rob.image), rob.rect)
         pygame.display.flip()
     
     def partb():
@@ -515,7 +515,7 @@ def death():
         rob.state = 'deathanimation'
         rob.a_frame = len(rob.sprites[rob.state])-1
         rob.image = pygame.image.load(rob.sprites[rob.state][rob.a_frame]).convert_alpha()
-        SCREEN.blit(pygame.transform.scale2x(rob.image), rob.pos)
+        SCREEN.blit(pygame.transform.scale2x(rob.image), rob.rect)
         fader.set_alpha(fadebg)
         SCREEN.blit(fader, (0, 0))
         pygame.display.flip()
@@ -525,7 +525,7 @@ def death():
         rob.state = 'deathanimation'
         rob.a_frame = len(rob.sprites[rob.state])-1
         rob.image = pygame.image.load(rob.sprites[rob.state][rob.a_frame]).convert_alpha()
-        SCREEN.blit(pygame.transform.scale2x(rob.image), rob.pos)
+        SCREEN.blit(pygame.transform.scale2x(rob.image), rob.rect)
         fader.set_alpha(fadebg)
         SCREEN.blit(fader, (0, 0))
         death.set_alpha(fade)
@@ -537,7 +537,7 @@ def death():
         rob.state = 'deathanimation'
         rob.a_frame = len(rob.sprites[rob.state])-1
         rob.image = pygame.image.load(rob.sprites[rob.state][rob.a_frame]).convert_alpha()
-        SCREEN.blit(pygame.transform.scale2x(rob.image), rob.pos)
+        SCREEN.blit(pygame.transform.scale2x(rob.image), rob.rect)
         fader.set_alpha(fadebg)
         SCREEN.blit(fader, (0, 0))
         death.set_alpha(fade)
@@ -609,7 +609,7 @@ def death():
                     if selected == 0:
                         GAME_STATE = 'menu'
                         rob.state = 'idle'
-                        rob.pos = pygame.Vector2(SCREEN_WIDTH//2, SCREEN_HEIGHT-64*3)
+                        rob.rect = pygame.Vector2(SCREEN_WIDTH//2, SCREEN_HEIGHT-64*3)
                         rob.hp = 100
                         rob.dead = False
                         rob.hurting = 1

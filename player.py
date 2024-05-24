@@ -19,26 +19,28 @@ class Player(pygame.sprite.Sprite):
    attacks = ['attackA', 'attackB']
    for i in list(sprites.keys()):
       sprites[i] = sorted(sprites[i], key = lambda x: x[-7:-4])
+      index = 0
+      for sprite in sprites[i]:
+         sprites[i][index] = pygame.transform.scale2x(pygame.image.load(sprite).convert_alpha())
+         index += 1
    
    def __init__(self):
       super(Player, self).__init__()
       self.count = 0
-      self.surf = pygame.Surface((64*3, 64*3))
-      self.rect = pygame.Rect(SCREEN_WIDTH//2, SCREEN_HEIGHT-64*3, 64*3, 64*3)
+      self.surf = pygame.Surface((128*2, 64*2))
+      self.rect = self.surf.get_rect() #pygame.Rect(SCREEN_WIDTH//2, SCREEN_HEIGHT-64*3, 64*3, 64*3)
       self.a_frame = 0
       self.state = 'idle'
-      self.image = pygame.image.load(self.sprites[self.state][self.a_frame])
+      self.image = self.sprites[self.state][self.a_frame]
       self.size = self.image.get_size()
-      self.bigger_img = pygame.transform.scale(self.image, (self.size[0]*3, self.size[1]*3))
       self.facing = True
       self.attacking = 1
       self.hurting = 1
       self.attack_type = 'attackA'
       self.attackBool = False
-      self.pos = vec(self.rect.x, self.rect.y)
-      self.vel = vec(0, 20)
+      self.vel = vec(0, 22)
       self.acc = vec(0, 0)
-      self.mask = pygame.mask.from_surface(self.bigger_img)
+      self.mask = pygame.mask.from_surface(self.image)
       self.hp = 100
       self.maxhp = 100
       self.iframes = FRAMES*3
@@ -46,6 +48,7 @@ class Player(pygame.sprite.Sprite):
       self.jumping = False
       self.jumpinganim = 1
       self.dead = False
+      self.falling = False
 
    def attack(self):
       self.a_frame = 0
@@ -79,10 +82,14 @@ class Player(pygame.sprite.Sprite):
          self.facing = True
          self.state = 'walk'
          self.acc.x = 0.2
-      
+      elif pressed_keys[K_UP]:
+         self.vel.y = -2
+      elif pressed_keys[K_DOWN]:
+         self.vel.y = 2
       else:
          self.state = 'idle'
          self.acc.x = 0
+         self.vel.y = 0
 
       self.vel.x += self.acc.x - 0.01*self.acc.x # friction = 0.01
       if abs(self.vel.x) >= 2:
@@ -90,13 +97,11 @@ class Player(pygame.sprite.Sprite):
       if self.acc.x == 0:
          self.vel.x *= 0.5
 
-      self.pos.x += self.vel.x
+      self.rect.x += self.vel.x
 
-      self.rect.centerx = self.pos.x
-
-      if self.pos.x + (self.size[0]//2) < 0:
-         self.pos.x = -(self.size[0]//2)
-      if self.pos.x > SCREEN_WIDTH-(3*self.size[0]//2):
-         self.pos.x = SCREEN_WIDTH-(3*self.size[0]//2)
+      if self.rect.x + (self.size[0]//2) < 0:
+         self.rect.x = -(self.size[0]//2)
+      if self.rect.x > SCREEN_WIDTH-(3*self.size[0]//2):
+         self.rect.x = SCREEN_WIDTH-(3*self.size[0]//2)
 
       
