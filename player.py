@@ -36,7 +36,7 @@ class Player(pygame.sprite.Sprite):
       self.attack_type = 'attackA'
       self.attackBool = False
       self.pos = vec(self.rect.x, self.rect.y)
-      self.vel = vec(0, 16)
+      self.vel = vec(0, 20)
       self.acc = vec(0, 0)
       self.mask = pygame.mask.from_surface(self.bigger_img)
       self.hp = 100

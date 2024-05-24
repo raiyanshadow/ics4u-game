@@ -1,4 +1,5 @@
-import player, enemy, pygame, random, math, time, os, sys, barrier_line, healthbar
+import pygame.camera
+import player, enemy, pygame, random, math, time, os, sys, barrier_line, healthbar, grounds
 from constants import *
 from pygame.locals import *
 global update
@@ -14,18 +15,10 @@ def true_resize(target_width, original_image):
 def animate():
     if not rob.dead: rob.a_frame = (rob.a_frame + 1) % len(rob.sprites[rob.state])
     rob.image = pygame.image.load(rob.sprites[rob.state][rob.a_frame]).convert_alpha()
+    rob.mask = pygame.mask.from_surface(rob.image)
     rob.image.set_colorkey(pygame.SRCCOLORKEY)
     rob.size = rob.image.get_size()
     rob.bigger_img = pygame.transform.scale(rob.image, (rob.size[0]*3, rob.size[1]*3))
-
-def clip_image(image, clip):
-    image.set_clip(clip)
-    return image.subsurface(image.get_clip())
-
-def gaussian_blur(surface, radius):
-    scaled_surface = pygame.transform.smoothscale(surface, (surface.get_width() // radius, surface.get_height() // radius))
-    scaled_surface = pygame.transform.smoothscale(scaled_surface, (surface.get_width(), surface.get_height()))
-    return scaled_surface
 
 def show_fps(screen, clock):
     """utility function to show frames per second"""
@@ -39,18 +32,7 @@ def draw_bg(scroll):
     for j in range(len(super_mountain_dusk)):
             for i in range(-maxwidth[j], maxwidth[j]):
                 SCREEN.blit(super_mountain_dusk[j], ((i*super_mountain_dusk[j].get_width())-round(scroll*super_mountain_dusk_parallax_scroll[j]), 0))
-
-def draw_ground(scroll):
-    for i in range(0, math.ceil(SCREEN_WIDTH/round_1_ground[0][0].get_width())):
-        for j in range(-1, 2, 1):
-            SCREEN.blit(round_1_ground[0][1], (i*round_1_ground[0][1].get_width()-scroll*5-SCREEN_WIDTH*j, SCREEN_HEIGHT-round_1_ground[0][1].get_height()))
             
-def draw_floats(scroll, floating):
-    for i in range(len(floating)):
-        for j in range(len(floating[i])):
-            if floating[i][j] != 0:
-                SCREEN.blit(round_1_ground[floating[i][j][0]][floating[i][j][1]], (i*round_1_ground[0][0].get_width(), j*round_1_ground[0][0].get_height()))
-
 def draw_controls(borders):
     hsize = true_resize(600, borders[0][0])
     controlrenders = [["move", (220, 235)],
@@ -101,13 +83,6 @@ super_mountain_dusk_parallax_scroll = [0, 1, 2, 5, 7, 12]
 maxwidth = []
 for i in range(len(super_mountain_dusk)):
     maxwidth.append(math.ceil(SCREEN_WIDTH/super_mountain_dusk[i].get_width())+1+math.ceil(super_mountain_dusk_parallax_scroll[i]))
-
-tmp = pygame.image.load('./sprites/ground_big.png').convert() 
-round_1_ground = [[clip_image(tmp, (i*32, j*32, 32, 32)) for j in range(3)] for i in range(3)]
-for i in range(len(round_1_ground)):
-    for j in range(len(round_1_ground[i])):
-        round_1_ground[i][j].set_colorkey(BLACK)
-        round_1_ground[i][j] = pygame.transform.scale(round_1_ground[i][j], (64, 64))
 
 title = pygame.image.load('./sprites/title.png').convert()
 title = pygame.transform.scale(title, (SCREEN_WIDTH-200, SCREEN_HEIGHT-200)).convert()
@@ -204,6 +179,7 @@ def menu():
     clockobject = pygame.time.Clock()
     def render(scroll):
         draw_bg(scroll)
+        
         SCREEN.blit(title, (0, 0))
         for i in range(len(texts)): 
             if i == selected: SCREEN.blit(FONT_24.render(texts[i], True, SELECT), (SCREEN_WIDTH//2+230, SCREEN_HEIGHT//2+155+i*50), special_flags=BLEND_ALPHA_SDL2)
@@ -296,15 +272,13 @@ def play():
     stagex = SCREEN_WIDTH*2
     stageposx = 0
     hbar = healthbar.HealthBar(0, 0, rob)
-
     startscrollingposx = SCREEN_WIDTH/2
-
     playerposx = SCREEN_WIDTH/2-rob_profile.get_width()/2
     fade = 255
     SCREEN.fill((0,0,0))
     scroll = 0
     clockobject = pygame.time.Clock()
-    rob.pos = pygame.Vector2(SCREEN_WIDTH/2-rob.image.get_width()/2, rob.pos.y+round_1_ground[0][0].get_height()-55)
+    rob.pos = pygame.Vector2(SCREEN_WIDTH/2-rob.image.get_width()/2, rob.pos.y)
     rob.rect = rob.image.get_rect(center = rob.pos)
     hsize = true_resize(600, borders[1][2])
     paused = False
@@ -315,12 +289,17 @@ def play():
     selected2 = 0
     warning = False
     rad = 0.1
-    floating = [[0]*(SCREEN_WIDTH//round_1_ground[0][0].get_width())]*(SCREEN_HEIGHT//round_1_ground[0][0].get_height())
-    floating[len(floating)-1][4:8] = [(0, 1)]*4
-    floating[len(floating)-1][16:20] = [(0, 1)]*4
     barrierleft = pygame.draw.rect(SCREEN, WHITE, (20, 0, 5, SCREEN_HEIGHT))
     barrierright = pygame.draw.rect(SCREEN, WHITE, (SCREEN_WIDTH-20, 0, 5, SCREEN_HEIGHT))
-    def render(scroll, floating):
+    ground_group = pygame.sprite.Group()
+    for i in range(0, math.ceil(SCREEN_WIDTH/64)):
+        for j in range(-1, 2, 1):
+            ground_group.add(grounds.Ground(i*64, SCREEN_HEIGHT-64, (0, 1), scroll))
+    ground_group.add(grounds.Ground(SCREEN_WIDTH//2-325, 455, (0, 2), scroll), grounds.Ground(SCREEN_WIDTH//2+325, 455, (0, 2), scroll), 
+                     grounds.Ground(SCREEN_WIDTH//2-325-64, 455, (0, 1), scroll), grounds.Ground(SCREEN_WIDTH//2+325-64, 455, (0, 1), scroll),
+                     grounds.Ground(SCREEN_WIDTH//2-325-64*2, 455, (0, 0), scroll), grounds.Ground(SCREEN_WIDTH//2+325-64*2, 455, (0, 0), scroll))
+
+    def render(scroll):
         global fader
         if GAME_STATE == 'paused': 
             if controls:
@@ -346,16 +325,19 @@ def play():
                     else: SCREEN.blit(text, (round((borders[2][3].get_width())/2-text.get_width()/2+115), 35+round(hsize/2-text.get_height()/2)+i*50), special_flags=BLEND_ALPHA_SDL2)
             return False
         draw_bg(scroll)
-        draw_ground(scroll)
-        draw_floats(scroll, floating)
+        ground_group.draw(SCREEN)
         b_img = pygame.transform.scale2x(borders[0][0])
         p_img = clip_image(rob.image, (56,6,29,23))
         p_img = pygame.transform.scale(p_img, (p_img.get_width()*3, p_img.get_height()*3))
         hbar.update()
         SCREEN.blit(b_img, (25, 25))
         SCREEN.blit(p_img, (25 + b_img.get_width()/2 - rob_profile.get_width()/2, p_img.get_height()))
-        if rob.facing: SCREEN.blit(pygame.transform.scale2x(rob.image), rob.pos)
-        else: SCREEN.blit(pygame.transform.flip(pygame.transform.scale2x(rob.image), True, False), rob.pos)
+        if rob.facing: 
+            SCREEN.blit(pygame.transform.scale2x(rob.mask.to_surface(setcolor=(255, 255, 255, 255), unsetcolor=(0, 0, 0, 0))), rob.pos)
+            SCREEN.blit(pygame.transform.scale2x(rob.image), rob.pos)
+        else: 
+            SCREEN.blit(pygame.transform.flip(pygame.transform.scale2x(rob.mask.to_surface(setcolor=(255, 255, 255, 255), unsetcolor=(0, 0, 0, 0))), True, False), rob.pos)
+            SCREEN.blit(pygame.transform.flip(pygame.transform.scale2x(rob.image), True, False), rob.pos)
         if rob.dead: 
             if pygame.time.get_ticks() - death_done > 1000:
                 fader = pygame.surface.Surface((SCREEN_WIDTH, SCREEN_HEIGHT)).convert()
@@ -427,6 +409,7 @@ def play():
                     rob.attack()
             if event.type == MOUSEBUTTONDOWN:
                 rob.hurt()
+                print(pygame.mouse.get_pos())
         rob.update(pygame.key.get_pressed(), JUMP_TIMER)
         if rob.dead:
                 death()
@@ -453,13 +436,14 @@ def play():
                     rob.jumpinganim = min(rob.jumpinganim-1, 8)
                     rob.a_frame -= 1
                     
-                if rob.pos.y == SCREEN_HEIGHT - round_1_ground[0][1].get_height(): rob.jumpinganim = max(rob.jumpinganim-1, 0)
+                if rob.pos.y == SCREEN_HEIGHT - 545: rob.jumpinganim = max(rob.jumpinganim-1, 0)
                 rob.state = 'jump'
                 rob.pos.y -= rob.vel.y
                 rob.vel.y -= GRAVITY
                 if rob.vel.y < -rob.jumpheight:
                     rob.jumping = False
                     rob.vel.y = rob.jumpheight
+                
             if not rob.hurting > 1 and not rob.attackBool and rob.state != 'walk' and rob.state != 'jump' and rob.state != 'deathanimation':
                 rob.state = 'idle'
                 fps = 150
@@ -467,12 +451,16 @@ def play():
             animate()
             updatea = pygame.time.get_ticks()
         
-        if not render(scroll, floating): 
+        if not render(scroll): 
             show_fps(SCREEN, clockobject)
             pygame.display.flip()
             clockobject.tick(FRAMES)
             continue
-        
+
+        if rob.jumping: 
+            for pieces in ground_group:
+                if pygame.sprite.collide_mask(rob, pieces):
+                    rob.jumping = False
         
         show_fps(SCREEN, clockobject)
         pygame.display.flip()
@@ -506,7 +494,6 @@ def death():
                         
     def render(scroll):
         draw_bg(scroll)
-        draw_ground(scroll)
         b_img = pygame.transform.scale2x(borders[0][0])
         p_img = clip_image(rob.image, (56,6,29,23))
         p_img = pygame.transform.scale(p_img, (p_img.get_width()*3, p_img.get_height()*3))

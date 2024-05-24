@@ -21,3 +21,7 @@ SCROLL_THRESH = 300
 FRAMES = 144
 GRAVITY = 1
 JUMP_TIMER = 0
+
+def clip_image(image, clip):
+    image.set_clip(clip)
+    return image.subsurface(image.get_clip())
