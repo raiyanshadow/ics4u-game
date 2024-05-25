@@ -28,10 +28,12 @@ class Player(pygame.sprite.Sprite):
       super(Player, self).__init__()
       self.count = 0
       self.surf = pygame.Surface((128*2, 64*2))
-      self.rect = self.surf.get_rect() #pygame.Rect(SCREEN_WIDTH//2, SCREEN_HEIGHT-64*3, 64*3, 64*3)
+      self.rect = self.surf.get_rect()
       self.a_frame = 0
       self.state = 'idle'
       self.image = self.sprites[self.state][self.a_frame]
+      self.rect.x = SCREEN_WIDTH//2-self.image.get_width()//2
+      self.rect.y = 560
       self.size = self.image.get_size()
       self.facing = True
       self.attacking = 1
@@ -66,6 +68,21 @@ class Player(pygame.sprite.Sprite):
          self.dead = True
          self.state = 'deathanimation'
 
+   def jump_update(self, fps):
+      
+      self.state = 'jump'
+      self.rect.y -= self.vel.y
+      self.vel.y -= GRAVITY
+      if self.vel.y < -self.jumpheight:
+         self.jumping = False
+         self.vel.y = 10
+
+   def fall(self):
+      self.vel.y = -abs(self.vel.y)
+      self.rect.y -= self.vel.y
+      self.vel.y -= GRAVITY
+
+
    def update(self, pressed_keys, event_update):
 
       if GAME_STATE == 'paused':
@@ -77,19 +94,17 @@ class Player(pygame.sprite.Sprite):
          self.facing = False
          self.state = 'walk'
          self.acc.x = -0.2
-      
+         if self.facing:
+            self.mask = pygame.transform.flip(self.mask, True, False)
       elif pressed_keys[K_RIGHT]:
          self.facing = True
          self.state = 'walk'
          self.acc.x = 0.2
-      elif pressed_keys[K_UP]:
-         self.vel.y = -2
-      elif pressed_keys[K_DOWN]:
-         self.vel.y = 2
+         if not self.facing:
+            self.mask = pygame.transform.flip(self.mask, True, False)
       else:
          self.state = 'idle'
          self.acc.x = 0
-         self.vel.y = 0
 
       self.vel.x += self.acc.x - 0.01*self.acc.x # friction = 0.01
       if abs(self.vel.x) >= 2:

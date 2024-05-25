@@ -266,7 +266,7 @@ deathfade = 0
 def play():
     global GAME_STATE, controls
     rob_profile = pygame.image.load(os.path.join('sprites', 'rob_profile.png')).convert_alpha()
-    rob_profile = pygame.transform.scale(rob_profile, (rob_profile.get_width()*3, rob_profile.get_height()*3))
+    rob_profile = pygame.transform.scale(rob_profile, (112, 112))
     stagex = SCREEN_WIDTH*2
     stageposx = 0
     hbar = healthbar.HealthBar(0, 0, rob)
@@ -276,7 +276,7 @@ def play():
     SCREEN.fill((0,0,0))
     scroll = 0
     clockobject = pygame.time.Clock()
-    rob.rect = rob.image.get_rect(topleft = pygame.Vector2(SCREEN_WIDTH/2-rob.image.get_width()/2, rob.rect.y))
+
     hsize = true_resize(600, borders[1][2])
     paused = False
     pausetexts = ['resume', 'view controls', 'quit to main menu', 'quit to desktop']
@@ -324,11 +324,10 @@ def play():
         draw_bg(scroll)
         ground_group.draw(SCREEN)
         b_img = pygame.transform.scale2x(borders[0][0])
-        p_img = clip_image(rob.image, (56,6,29,23))
-        p_img = pygame.transform.scale(p_img, (p_img.get_width()*3, p_img.get_height()*3))
+        p_img = clip_image(rob.image, (56*2,6*2,29*2,23*2))
         hbar.update()
         SCREEN.blit(b_img, (25, 25))
-        SCREEN.blit(p_img, (25 + b_img.get_width()/2 - rob_profile.get_width()/2, p_img.get_height()))
+        SCREEN.blit(rob_profile, (25 + b_img.get_width()/2 - rob_profile.get_width()/2, p_img.get_height()))
         if rob.facing: 
             SCREEN.blit(rob.mask.to_surface(setcolor=(255, 255, 255, 255), unsetcolor=(0, 0, 0, 0)), rob.rect)
             SCREEN.blit(rob.image, rob.rect)
@@ -351,15 +350,37 @@ def play():
     cooldown = 150
     fps = 150
     while True:
+        collided = []
+        for obstacle in ground_group:
+            rob.falling = False
+            collision = pygame.sprite.collide_mask(rob, obstacle)
+            if collision: collided.append(obstacle)
+        for col in collided:
+            if (rob.rect.top < col.rect.bottom and rob.rect.bottom > col.rect.bottom):
+                rob.rect.top = col.rect.bottom
+                rob.vel.y = 0
+                rob.falling = True
+                rob.jumping = False
+                
+            if (rob.rect.bottom-25 > col.rect.top and rob.rect.top < col.rect.top):
+                rob.rect.y = col.rect.y-rob.rect.height
+                rob.vel.y = 0
+                rob.jumping = False
+        if len(collided) == 0 and not rob.falling:
+            fps = 15
+            rob.falling = True       
+        
         x = pygame.event.get()
         for event in x:
             if event.type == QUIT:
                 pygame.quit()
                 quit()
             if event.type == KEYDOWN:
-                if event.key == K_z:
+                if event.key == K_z and not rob.jumping and not rob.falling:
+                    rob.vel.y = 22
                     rob.a_frame = 0
                     rob.jumping = True
+                    rob.falling = False
                     rob.jumpinganim = len(rob.sprites['jump'])
 
                 if event.key == K_ESCAPE:
@@ -428,20 +449,11 @@ def play():
                 fps = 100
             if rob.jumping == True:
                 fps = 15
-                rob.state = 'jump'
-                if rob.vel.y > 0:
-                    rob.jumpinganim = min(rob.jumpinganim-1, 8)
-                    rob.a_frame -= 1
-                    
-                if rob.rect.y == SCREEN_HEIGHT - 545: rob.jumpinganim = max(rob.jumpinganim-1, 0)
-                rob.state = 'jump'
-                rob.rect.y -= rob.vel.y
-                rob.vel.y -= GRAVITY
-                if rob.vel.y < -rob.jumpheight:
-                    rob.jumping = False
-                    rob.vel.y = rob.jumpheight
-                
-            if not rob.hurting > 1 and not rob.attackBool and rob.state != 'walk' and rob.state != 'jump' and rob.state != 'deathanimation':
+                rob.jump_update(fps)
+            if collided == [] and not rob.jumping and rob.falling:
+                fps = 15
+                rob.fall()
+            if not rob.hurting > 1 and not rob.attackBool and rob.state != 'walk' and rob.state != 'jump' and rob.state != 'deathanimation' and not rob.falling:
                 rob.state = 'idle'
                 fps = 150
             
@@ -454,24 +466,25 @@ def play():
             clockobject.tick(FRAMES)
             continue
         i = 1
-        for obstacle in ground_group:
-            collision = pygame.sprite.collide_mask(rob, obstacle)
-            if collision:
-                SCREEN.blit(FONT_24.render('hit', True, WHITE), (SCREEN_WIDTH//2, 0))
-                SCREEN.blit(FONT_24.render(f"{pygame.Vector2(obstacle.rect.x, obstacle.rect.y) - pygame.Vector2(rob.rect.x, rob.rect.y)}", True, WHITE), (SCREEN_WIDTH//2, 24*i))
-                pygame.draw.circle(SCREEN, (255, 0, 0), pygame.Vector2(rob.rect.x, rob.rect.y) + pygame.Vector2(collision[0], collision[1]), 25)
-                i += 1
         
+
         show_fps(SCREEN, clockobject)
         pygame.display.flip()
         clockobject.tick(FRAMES)
 
 def death():
-    global fader, fade, GAME_STATE
+    global fader, fade, GAME_STATE, scroll
+    ground_group = pygame.sprite.Group()
+    for i in range(0, math.ceil(SCREEN_WIDTH/64)):
+        for j in range(-1, 2, 1):
+            ground_group.add(grounds.Ground(i*64, SCREEN_HEIGHT-64, (0, 1), scroll))
+    ground_group.add(grounds.Ground(SCREEN_WIDTH//2-325, 455, (0, 2), scroll), grounds.Ground(SCREEN_WIDTH//2+325, 455, (0, 2), scroll), 
+                     grounds.Ground(SCREEN_WIDTH//2-325-64, 455, (0, 1), scroll), grounds.Ground(SCREEN_WIDTH//2+325-64, 455, (0, 1), scroll),
+                     grounds.Ground(SCREEN_WIDTH//2-325-64*2, 455, (0, 0), scroll), grounds.Ground(SCREEN_WIDTH//2+325-64*2, 455, (0, 0), scroll))
     fadebg = 0
     fade = 0
     rob_profile = pygame.image.load(os.path.join('sprites', 'rob_profile.png')).convert_alpha()
-    rob_profile = pygame.transform.scale(rob_profile, (rob_profile.get_width()*3, rob_profile.get_height()*3))
+    rob_profile = pygame.transform.scale(rob_profile, (112, 112))
     hbar = healthbar.HealthBar(0, 0, rob)
     rob.rect.y += 15
     playerposx = rob.rect.x
@@ -494,38 +507,37 @@ def death():
                         
     def render(scroll):
         draw_bg(scroll)
+        ground_group.draw(SCREEN)
         b_img = pygame.transform.scale2x(borders[0][0])
-        p_img = clip_image(rob.image, (56,6,29,23))
-        p_img = pygame.transform.scale(p_img, (p_img.get_width()*3, p_img.get_height()*3))
+        p_img = clip_image(rob.image, (0, 0,29,23))
+        p_img = pygame.transform.scale(rob_profile, (p_img.get_width()*3, p_img.get_height()*3))
         hbar.update()
         SCREEN.blit(b_img, (25, 25))
         SCREEN.blit(p_img, (25 + b_img.get_width()/2 - rob_profile.get_width()/2, p_img.get_height()))
+        rob.state = 'deathanimation'
+        rob.a_frame = min(rob.a_frame+1, len(rob.sprites[rob.state])-1)
+        rob.image = rob.sprites[rob.state][rob.a_frame].convert_alpha()
+        rob.mask = pygame.mask.from_surface(rob.image)
+        if rob.facing: 
+            SCREEN.blit(rob.mask.to_surface(setcolor=(255, 255, 255, 255), unsetcolor=(0, 0, 0, 0)), rob.rect)
+            SCREEN.blit(rob.image, rob.rect)
+        else: 
+            SCREEN.blit(pygame.transform.flip(rob.mask.to_surface(setcolor=(255, 255, 255, 255), unsetcolor=(0, 0, 0, 0)), True, False), rob.rect)
+            SCREEN.blit(pygame.transform.flip(rob.image, True, False), rob.rect)
 
     def parta():
         global animdone
         render(scroll)
-        rob.state = 'deathanimation'
-        rob.a_frame = min(rob.a_frame+1, len(rob.sprites[rob.state])-1)
-        rob.image = pygame.image.load(rob.sprites[rob.state][rob.a_frame]).convert_alpha()
-        SCREEN.blit(pygame.transform.scale2x(rob.image), rob.rect)
         pygame.display.flip()
     
     def partb():
         render(scroll)
-        rob.state = 'deathanimation'
-        rob.a_frame = len(rob.sprites[rob.state])-1
-        rob.image = pygame.image.load(rob.sprites[rob.state][rob.a_frame]).convert_alpha()
-        SCREEN.blit(pygame.transform.scale2x(rob.image), rob.rect)
         fader.set_alpha(fadebg)
         SCREEN.blit(fader, (0, 0))
         pygame.display.flip()
         
     def partc():
         render(scroll)
-        rob.state = 'deathanimation'
-        rob.a_frame = len(rob.sprites[rob.state])-1
-        rob.image = pygame.image.load(rob.sprites[rob.state][rob.a_frame]).convert_alpha()
-        SCREEN.blit(pygame.transform.scale2x(rob.image), rob.rect)
         fader.set_alpha(fadebg)
         SCREEN.blit(fader, (0, 0))
         death.set_alpha(fade)
@@ -534,10 +546,6 @@ def death():
 
     def partd():
         render(scroll)
-        rob.state = 'deathanimation'
-        rob.a_frame = len(rob.sprites[rob.state])-1
-        rob.image = pygame.image.load(rob.sprites[rob.state][rob.a_frame]).convert_alpha()
-        SCREEN.blit(pygame.transform.scale2x(rob.image), rob.rect)
         fader.set_alpha(fadebg)
         SCREEN.blit(fader, (0, 0))
         death.set_alpha(fade)
@@ -608,15 +616,7 @@ def death():
                 if event.key == K_RETURN:
                     if selected == 0:
                         GAME_STATE = 'menu'
-                        rob.state = 'idle'
-                        rob.rect = pygame.Vector2(SCREEN_WIDTH//2, SCREEN_HEIGHT-64*3)
-                        rob.hp = 100
-                        rob.dead = False
-                        rob.hurting = 1
-                        rob.a_frame = 0
-                        rob.jumping = False
-                        rob.jumpinganim = 1
-                        rob.attacking = 1
+                        rob.__init__()
                         return
                     else:
                         pygame.quit()
