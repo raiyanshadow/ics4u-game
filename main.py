@@ -277,6 +277,7 @@ def play():
     SCREEN.fill((0,0,0))
     scroll = 0
     clockobject = pygame.time.Clock()
+
     next_dash_frame = 0
     dash_frame = 0
     hsize = true_resize(600, borders[1][2])
@@ -473,21 +474,20 @@ def play():
                 fps = 100
             if rob.jumping == True:
                 fps = 15
-                rob.jump_update(fps)
-            if collided == [] and not rob.jumping and rob.falling:
-                fps = 15
-                rob.fall()
-            if rob.dashing:
-                rob.dash(pygame.time.get_ticks())
-                if pygame.time.get_ticks() - next_dash_frame > 120:
-                    dash_frame = (dash_frame + 1) % 3
-                fps = 15
-            if rob.healing: 
-                rob.heal(pygame.time.get_ticks())
-                rob.state = 'heal'
-                fps = 90
-            if (not rob.hurting > 1 and not rob.attackBool and rob.state != 'walk' and rob.state != 'jump' and rob.state != 'deathanimation' 
-                and not rob.falling and not rob.dashing and not rob.healing):
+                rob.state = 'jump'
+                if rob.vel.y > 0:
+                    rob.jumpinganim = min(rob.jumpinganim-1, 8)
+                    rob.a_frame -= 1
+                    
+                if rob.rect.y == SCREEN_HEIGHT - 545: rob.jumpinganim = max(rob.jumpinganim-1, 0)
+                rob.state = 'jump'
+                rob.rect.y -= rob.vel.y
+                rob.vel.y -= GRAVITY
+                if rob.vel.y < -rob.jumpheight:
+                    rob.jumping = False
+                    rob.vel.y = rob.jumpheight
+                
+            if not rob.hurting > 1 and not rob.attackBool and rob.state != 'walk' and rob.state != 'jump' and rob.state != 'deathanimation':
                 rob.state = 'idle'
                 fps = 150
             

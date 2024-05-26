@@ -76,37 +76,6 @@ class Player(pygame.sprite.Sprite):
          self.dead = True
          self.state = 'deathanimation'
 
-   def jump_update(self, fps):
-      
-      self.state = 'jump'
-      self.rect.y -= self.vel.y
-      self.vel.y -= GRAVITY
-      if self.vel.y < -self.jumpheight:
-         self.jumping = False
-         self.vel.y = 10
-
-   def fall(self):
-      self.vel.y = -abs(self.vel.y)
-      self.rect.y -= self.vel.y
-      self.vel.y -= GRAVITY
-
-   def dash(self, dt):
-      self.rect.x += self.veldash
-      self.veldash -= 0.1
-      if dt - self.dash_time >= 300:
-         self.veldash = 0
-         self.dashing = False
-         self.dash_time = 0
-   
-   def heal(self, dt):
-      self.state == 'heal'
-      if dt - self.heal_time >= 1300:
-         self.hp += self.hpcharge
-         self.hp = min(self.hp, self.maxhp)
-         self.healing = False
-         self.heal_time = 0
-         self.no_hpcharges = max(0, self.no_hpcharges-1)
-
    def update(self, pressed_keys, event_update):
 
       if GAME_STATE == 'paused':
