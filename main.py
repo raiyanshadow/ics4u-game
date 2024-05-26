@@ -273,13 +273,12 @@ def play():
     hbar = healthbar.HealthBar(0, 0, rob)
     startscrollingposx = SCREEN_WIDTH/2
     playerposx = SCREEN_WIDTH/2-rob_profile.get_width()/2
+    next_dash_frame = 0
+    dash_frame = 0
     fade = 255
     SCREEN.fill((0,0,0))
     scroll = 0
     clockobject = pygame.time.Clock()
-
-    next_dash_frame = 0
-    dash_frame = 0
     hsize = true_resize(600, borders[1][2])
     paused = False
     pausetexts = ['resume', 'view controls', 'quit to main menu', 'quit to desktop']
@@ -388,7 +387,7 @@ def play():
                 pygame.quit()
                 quit()
             if event.type == KEYDOWN:
-                if event.key == K_z and not rob.jumping and not rob.falling:
+                if event.key == K_z and not rob.jumping and not rob.falling and not rob.healing:
                     rob.vel.y = 22
                     rob.a_frame = 0
                     rob.jumping = True
@@ -405,7 +404,7 @@ def play():
                     if GAME_STATE == 'playing': GAME_STATE = 'paused'
                     else: GAME_STATE = 'playing'
                 
-                if event.key == K_LSHIFT:
+                if event.key == K_LSHIFT and not rob.dashing and not rob.healing:
                     rob.dashing = True
                     rob.dash_time = pygame.time.get_ticks()
                     rob.veldash = 15*(-1 if not rob.facing else 1)
@@ -474,20 +473,21 @@ def play():
                 fps = 100
             if rob.jumping == True:
                 fps = 15
-                rob.state = 'jump'
-                if rob.vel.y > 0:
-                    rob.jumpinganim = min(rob.jumpinganim-1, 8)
-                    rob.a_frame -= 1
-                    
-                if rob.rect.y == SCREEN_HEIGHT - 545: rob.jumpinganim = max(rob.jumpinganim-1, 0)
-                rob.state = 'jump'
-                rob.rect.y -= rob.vel.y
-                rob.vel.y -= GRAVITY
-                if rob.vel.y < -rob.jumpheight:
-                    rob.jumping = False
-                    rob.vel.y = rob.jumpheight
-                
-            if not rob.hurting > 1 and not rob.attackBool and rob.state != 'walk' and rob.state != 'jump' and rob.state != 'deathanimation':
+                rob.jump_update(fps)
+            if collided == [] and not rob.jumping and rob.falling:
+                fps = 15
+                rob.fall()
+            if rob.dashing:
+                rob.dash(pygame.time.get_ticks())
+                if pygame.time.get_ticks() - next_dash_frame > 120:
+                    dash_frame = (dash_frame + 1) % 3
+                fps = 15
+            if rob.healing: 
+                rob.heal(pygame.time.get_ticks())
+                rob.state = 'heal'
+                fps = 90
+            if (not rob.hurting > 1 and not rob.attackBool and rob.state != 'walk' and rob.state != 'jump' and rob.state != 'deathanimation' 
+                and not rob.falling and not rob.dashing and not rob.healing):
                 rob.state = 'idle'
                 fps = 150
             
@@ -655,7 +655,6 @@ def death():
                 if event.key == K_RETURN:
                     if selected == 0:
                         GAME_STATE = 'menu'
-                        rob.__init__()
                         return
                     else:
                         pygame.quit()
@@ -673,6 +672,7 @@ rob.state = 'idle'
 GAME_STATE = 'playing'
 while True:
     if GAME_STATE == 'playing':
+        rob.__init__()
         play()
     elif GAME_STATE == 'menu':
         fadeout()
