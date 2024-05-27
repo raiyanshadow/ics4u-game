@@ -1,5 +1,5 @@
 import pygame.camera
-import player, enemy, pygame, random, math, time, os, sys, barrier_line, healthbar, grounds
+import player, enemy, pygame, random, math, time, os, sys, barrier_line, healthbar, grounds, rounds
 from constants import *
 from pygame.locals import *
 global update
@@ -144,7 +144,6 @@ def initial_screen():
     cooldown = 150
     showing = True
     cur = 0
-    global fade
     fade = 254
     while True:
         for event in pygame.event.get():
@@ -236,9 +235,8 @@ def fadeout():
     scroll = 0
     clockobject = pygame.time.Clock()
     update_ticks = pygame.time.get_ticks()
-    def update():
+    def update(fade):
         nonlocal scroll
-        global fade
         scroll += 0.2
         fade += 0.5
         clockobject.tick(60)
@@ -255,7 +253,7 @@ def fadeout():
         SCREEN.blit(fader, (0, 0))
     while fade < 255:
         fade += 5
-        update()
+        update(fade)
         pygame.display.flip()
         clockobject.tick(60)
     fade = 0
@@ -299,8 +297,12 @@ def play():
                      grounds.Ground(SCREEN_WIDTH//2-200-64*2, 455, (0, 0), scroll), grounds.Ground(SCREEN_WIDTH//2+275-64*2, 455, (0, 0), scroll))
     heartbeatfps = 30
     heart_anim = 1
+    roundsystem = rounds.round()
+    showing_round_text = False
+    updatec = pygame.time.get_ticks()
+    enemysystem = enemy.Enemy()
 
-    def render(scroll, dash_frame, heart_anim):
+    def render(scroll, dash_frame, heart_anim, blinker, fade):
         global fader
         if GAME_STATE == 'paused': 
             if controls:
@@ -352,6 +354,10 @@ def play():
         elif rob.dashing:
             SCREEN.blit(pygame.transform.flip(pygame.transform.scale2x(pygame.image.load(f'./sprites/dash_fx{dash_frame+1}.png').convert_alpha()), True, False), (rob.rect.x, rob.rect.y))
         fader.set_alpha(fade)
+        if fade == 254: 
+            roundsystem.starting = True
+            roundsystem.timer = pygame.time.get_ticks()
+        if roundsystem.starting: roundsystem.start_round(roundsystem.timer, blinker)
         SCREEN.blit(fader, (0, 0))
         return True
         
@@ -499,12 +505,16 @@ def play():
             print(heart_anim)
             updateb = pygame.time.get_ticks()
         
-        if not render(scroll, dash_frame, heart_anim): 
+        if not render(scroll, dash_frame, heart_anim, showing_round_text, fade): 
             show_fps(SCREEN, clockobject)
             pygame.display.flip()
             clockobject.tick(FRAMES)
             continue
         i = 1
+        
+        if pygame.time.get_ticks() - updatec > 400:
+            updatec = pygame.time.get_ticks()
+            showing_round_text = not showing_round_text
         
 
         show_fps(SCREEN, clockobject)

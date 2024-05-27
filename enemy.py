@@ -11,8 +11,10 @@ def initialize_sprites(path, sep):
 
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, type):
         super(Enemy, self).__init__()
+        self.type = type
+        self.queue = []
 
 
 class SkeletonA(Enemy):
@@ -60,3 +62,4 @@ class SkeletonB(Enemy):
 
     def death_animation(self):
         self.state = 'death'
+        
