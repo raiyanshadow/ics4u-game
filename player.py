@@ -59,6 +59,8 @@ class Player(pygame.sprite.Sprite):
       self.healing = False
       self.heal_time = 0
       self.no_hpcharges = 3
+      self.attack_hitbox = pygame.mask.from_threshold(self.image, WHITE, pygame.color('white'))
+      self.attack_value = 66
 
    def attack(self):
       self.a_frame = 0
@@ -67,10 +69,10 @@ class Player(pygame.sprite.Sprite):
       self.attack_type = self.state
       self.attacking = len(self.sprites[self.state])
 
-   def hurt(self):
+   def hurt(self, hit_value):
       self.a_frame = 0
       self.state = 'hurt'
-      self.hp -= 10
+      self.hp -= hit_value
       self.hurting = len(self.sprites[self.state])
       if self.hp <= 0 and self.dead == False:
          self.dead = True
