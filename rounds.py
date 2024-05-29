@@ -8,16 +8,17 @@ class round(pygame.sprite.Sprite):
         self.special = False
         self.roundnum = 1
 
-    def start_round(self, dt, blinker, enemy: enemy.Enemy, boss: boss.Boss):
+    def start_round(self, dt, blinker, e: enemy.Enemy, boss: boss.Boss):
         self.starting = True
         text = FONT_48.render(f'round {self.roundnum} start', True, WHITE)
         if blinker: SCREEN.blit(text, (SCREEN_WIDTH//2-text.get_width()/2, 50))
         if pygame.time.get_ticks() - dt >= 3000:
+            self.starting = False
             if self.roundnum % 5 == 0:
                 self.special = True
                 return boss
             else:
-                enemy.queue = [enemy.SkeletonA]
+                e.queue.add(enemy.SkeletonA())
     
     def update_round(self):
         pass

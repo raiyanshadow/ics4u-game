@@ -1,5 +1,5 @@
 import pygame.camera
-import player, enemy, pygame, random, math, time, os, sys, barrier_line, healthbar, grounds, rounds
+import player, enemy, pygame, random, math, time, os, sys, barrier_line, healthbar, grounds, rounds, boss
 from constants import *
 from pygame.locals import *
 global update
@@ -301,6 +301,7 @@ def play():
     showing_round_text = False
     updatec = pygame.time.get_ticks()
     enemysystem = enemy.Enemy()
+    bosssystem = boss.Boss()
 
     def render(scroll, dash_frame, heart_anim, blinker, fade):
         global fader
@@ -357,7 +358,7 @@ def play():
         if fade == 254: 
             roundsystem.starting = True
             roundsystem.timer = pygame.time.get_ticks()
-        if roundsystem.starting: roundsystem.start_round(roundsystem.timer, blinker)
+        if roundsystem.starting: roundsystem.start_round(roundsystem.timer, blinker, enemysystem, bosssystem)
         SCREEN.blit(fader, (0, 0))
         return True
         
@@ -502,7 +503,6 @@ def play():
 
         if pygame.time.get_ticks() - updateb > 200:
             heart_anim = (heart_anim + 1) % 4
-            print(heart_anim)
             updateb = pygame.time.get_ticks()
         
         if not render(scroll, dash_frame, heart_anim, showing_round_text, fade): 
@@ -511,7 +511,7 @@ def play():
             clockobject.tick(FRAMES)
             continue
         i = 1
-        
+        if enemysystem.queue is not None: enemysystem.update(rob)
         if pygame.time.get_ticks() - updatec > 400:
             updatec = pygame.time.get_ticks()
             showing_round_text = not showing_round_text

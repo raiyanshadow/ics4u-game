@@ -59,7 +59,7 @@ class Player(pygame.sprite.Sprite):
       self.healing = False
       self.heal_time = 0
       self.no_hpcharges = 3
-      self.attack_hitbox = pygame.mask.from_threshold(self.image, WHITE, pygame.color('white'))
+      self.attack_hitbox = pygame.mask.from_threshold(self.image, WHITE, pygame.color.Color('white')).to_surface(SCREEN)
       self.attack_value = 66
 
    def attack(self):
