@@ -46,7 +46,7 @@ class Player(pygame.sprite.Sprite):
       self.mask = pygame.mask.from_surface(self.image)
       self.hp = 100
       self.maxhp = 100
-      self.iframes = FRAMES*3
+      self.iframes = pygame.time.get_ticks()
       self.jumpheight = self.vel.y
       self.jumping = False
       self.jumpinganim = 1
@@ -70,13 +70,15 @@ class Player(pygame.sprite.Sprite):
       self.attacking = len(self.sprites[self.state])
 
    def hurt(self, hit_value):
-      self.a_frame = 0
-      self.state = 'hurt'
-      self.hp -= hit_value
-      self.hurting = len(self.sprites[self.state])
-      if self.hp <= 0 and self.dead == False:
-         self.dead = True
-         self.state = 'deathanimation'
+      if pygame.time.get_ticks() - self.iframes > 1000:
+         self.a_frame = 0
+         self.state = 'hurt'
+         self.hp -= hit_value
+         self.hurting = len(self.sprites[self.state])
+         if self.hp <= 0 and self.dead == False:
+            self.dead = True
+            self.state = 'deathanimation'
+         self.iframes = pygame.time.get_ticks()
 
    def jump_update(self, fps):
       
