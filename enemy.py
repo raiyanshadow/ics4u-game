@@ -20,13 +20,13 @@ class Enemy(pygame.sprite.Sprite):
         self.queue.update(player)
 
 
+
 class SkeletonA(Enemy):
     def __init__(self):
         super(SkeletonA, self).__init__()
-        self.surf = pygame.Surface((64, 64))
         self.sprites = initialize_sprites('/round1-4/skeletonA')
         self.image = self.sprites['Idle'][0]
-        self.rect = self.surf.get_rect()
+        self.rect = self.image.get_rect()
         self.rect.x = random.choice([-100, 100+constants.SCREEN_WIDTH])
         self.rect.y = 540
         self.mask = pygame.mask.from_surface(self.image)
@@ -39,6 +39,7 @@ class SkeletonA(Enemy):
         self.facing = True
         self.dt = pygame.time.get_ticks()
         self.walking = False
+        self.oldRect = self.rect.copy()
 
     def animate(self, fps):
         if self.frame >= len(self.sprites[self.state]) - 1: 
@@ -53,20 +54,29 @@ class SkeletonA(Enemy):
             self.frame = (self.frame + 1) 
             self.image = self.sprites[self.state][self.frame]
             self.attack_hitbox = pygame.mask.from_threshold(self.image, WHITE, pygame.color.Color('gray'))
-            self.dt = pygame.time.get_ticks()
+            self.dt = pygame.time.get_ticks()    
+            self.rect.size = self.image.get_size()
+        SCREEN.blit(pygame.Surface(self.image.get_size()), self.rect)
         if self.facing: 
             SCREEN.blit(self.image, self.rect)
         else: 
             SCREEN.blit(pygame.transform.flip(self.image, True, False), self.rect)
+        
 
     def update(self, player: player.Player):
-        self.facing = (self.rect.x < player.rect.x)
+        if self.oldRect.size != self.rect.size:
+            print("Size changing")
+            self.rect.top = self.rect.top + (self.oldRect.height - self.rect.height)
+            if not self.facing: # if facing levfy6
+                self.rect.right = self.rect.right + (self.oldRect.width - self.rect.width)
+            self.oldRect = self.rect.copy()
+        self.facing = (self.rect.centerx < player.rect.centerx)
         flip = 1 if self.facing else -1
         fps = 100
-        offset = (self.rect.x - player.rect.x - (self.image.get_width() if self.facing else 0), self.rect.y - player.rect.y)
-        print(offset)
+        offset = (abs(self.rect.centerx - player.rect.centerx), abs(self.rect.centery - player.rect.centery))
+        SCREEN.blit(FONT_24.render(str(offset), False, WHITE), (SCREEN_WIDTH//2, 50))
         sightbox = pygame.mask.from_surface(pygame.Surface((100, 100)))
-        SCREEN.blit(pygame.Surface((100, 100)), (self.rect.x - player.rect.x - 40*flip, self.rect.y - player.rect.y))
+        SCREEN.blit(pygame.Surface((100, 100)), (self.rect.x - player.rect.x - (self.image.get_width() if self.facing else 0), self.rect.y - player.rect.y))
         x = sightbox.overlap(sightbox, offset)
         if self.dead: 
             fps = 250
@@ -78,9 +88,9 @@ class SkeletonA(Enemy):
             self.frame = 0
             self.attack(player)
         elif x and self.state == 'Attack' and not player.state == 'hurt':  
-            fps = 200
-            player.hurt(15)
-            print('hurt')
+            fps = 100
+            #player.hurt(15)
+            #print('hurt')
         elif self.mask.overlap(player.mask, offset) and not self.state == 'Hit' and player.attackBool: 
             self.frame = 0
             self.hurt = True
@@ -102,17 +112,19 @@ class SkeletonA(Enemy):
             elif choice == 'Walk' and not self.state == 'Walk': 
                 self.state = choice
                 self.walking = True
+        
         self.animate(fps)
         
     def attack(self, player: player.Player):
         self.attacking = True
         attacking_surf = pygame.Surface(self.image.get_size())
-        offset = (self.rect.x - player.rect.x - 50*(1 if self.facing else -1), self.rect.y - player.rect.y)
+        offset = (abs(self.rect.centerx - player.rect.centerx), abs(self.rect.centery - player.rect.centery))
         print(offset)
         attacking_mask = pygame.mask.from_surface(attacking_surf)
         pygame.draw.circle(attacking_surf, RED, (10, 10), 10)
         if attacking_mask.overlap(player.mask, offset): 
-            player.hurt(10)
+            pass
+            #player.hurt(10)
 
     def death_animation(self, fps):
         self.state = 'Dead'

@@ -31,8 +31,7 @@ class Player(pygame.sprite.Sprite):
       self.a_frame = 0
       self.state = 'idle'
       self.image = self.sprites[self.state][self.a_frame]
-      self.surf = pygame.Surface((64, 128))
-      self.rect = self.surf.get_rect()
+      self.rect = self.image.get_rect()
       self.rect.x = SCREEN_WIDTH//2-self.image.get_width()//2
       self.rect.y = 560
       self.size = self.image.get_size()
