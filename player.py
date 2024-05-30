@@ -28,11 +28,11 @@ class Player(pygame.sprite.Sprite):
    def __init__(self):
       super(Player, self).__init__()
       self.count = 0
-      self.surf = pygame.Surface((128*2, 64*2))
-      self.rect = self.surf.get_rect()
       self.a_frame = 0
       self.state = 'idle'
       self.image = self.sprites[self.state][self.a_frame]
+      self.surf = pygame.Surface((64, 128))
+      self.rect = self.surf.get_rect()
       self.rect.x = SCREEN_WIDTH//2-self.image.get_width()//2
       self.rect.y = 560
       self.size = self.image.get_size()
@@ -61,6 +61,7 @@ class Player(pygame.sprite.Sprite):
       self.no_hpcharges = 3
       self.attack_hitbox = pygame.mask.from_threshold(self.image, WHITE, pygame.color.Color('white')).to_surface(SCREEN)
       self.attack_value = 66
+      self.hitbox = self.rect.inflate(0, -26)
 
    def attack(self):
       self.a_frame = 0

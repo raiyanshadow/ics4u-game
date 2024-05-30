@@ -456,9 +456,6 @@ def play():
                             quit()
                 if event.key == K_x and not rob.attackBool:
                     rob.attack()
-            if event.type == MOUSEBUTTONDOWN:
-                rob.hurt()
-                print(pygame.mouse.get_pos())
         rob.update(pygame.key.get_pressed(), JUMP_TIMER)
         if rob.dead:
                 death()
