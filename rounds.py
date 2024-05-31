@@ -18,7 +18,7 @@ class round(pygame.sprite.Sprite):
                 self.special = True
                 return boss
             else:
-                e.queue.add(enemy.SkeletonA())
+                e.queue.add(enemy.SkeletonA(), enemy.SkeletonB())
     
     def update_round(self):
         pass

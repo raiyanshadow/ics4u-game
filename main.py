@@ -12,12 +12,6 @@ def true_resize(target_width, original_image):
     hsize = int((float(size) * float(wpercent)))
     return hsize
 
-def animate():
-    if not rob.dead: rob.a_frame = (rob.a_frame + 1) % len(rob.sprites[rob.state])
-    rob.image = rob.sprites[rob.state][rob.a_frame]
-    rob.mask = pygame.mask.from_surface(rob.image)
-    rob.size = rob.image.get_size()
-
 def show_fps(screen, clock):
     """utility function to show frames per second"""
     fps = str(int(clock.get_fps()))
@@ -495,7 +489,7 @@ def play():
                 rob.state = 'idle'
                 fps = 150
             
-            animate()
+            rob.animate()
             updatea = pygame.time.get_ticks()
 
         if pygame.time.get_ticks() - updateb > 200:
@@ -550,6 +544,7 @@ def death():
     death = pygame.transform.scale(death, (SCREEN_WIDTH, death.get_height()))
     death.set_alpha(0)
     selected = 0
+    
                         
     def render(scroll):
         draw_bg(scroll)

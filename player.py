@@ -58,9 +58,11 @@ class Player(pygame.sprite.Sprite):
       self.healing = False
       self.heal_time = 0
       self.no_hpcharges = 3
-      self.attack_hitbox = pygame.mask.from_threshold(self.image, WHITE, pygame.color.Color('white')).to_surface(SCREEN)
+      self.attack_hitbox = pygame.mask.from_surface(pygame.Surface((50, self.image.get_height())))
+      self.attack_offset = (self.rect.centerx + 100, abs(self.rect.centery - self.image.get_height()//2))
       self.attack_value = 66
-      self.hitbox = self.rect.inflate(0, -26)
+      self.jump_hitbox = pygame.mask.from_surface(pygame.Surface((30, 30)))
+
 
    def attack(self):
       self.a_frame = 0
@@ -146,4 +148,15 @@ class Player(pygame.sprite.Sprite):
          self.rect.x = SCREEN_WIDTH - self.size[0] + 40
 
       self.rect.x += self.vel.x
+      self.attack_offset = (self.rect.centerx + 100*(1 if self.facing else -1), abs(self.rect.centery - self.image.get_height()//2))
+      
+
+   def animate(self):
+      if not self.dead:
+         self.a_frame = (self.a_frame + 1) % len(self.sprites[self.state])
+         self.image = self.sprites[self.state][self.a_frame]
+         self.mask = pygame.mask.from_surface(self.image)
+         self.size = self.image.get_size()
+         
+
       
