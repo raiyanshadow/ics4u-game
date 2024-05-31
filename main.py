@@ -338,7 +338,6 @@ def play():
         SCREEN.blit(FONT_24.render(str(rob.no_hpcharges), True, WHITE), (heartpos[0] + 60, heartpos[1] + 20))
         SCREEN.blit(b_img, (25, 25))
         SCREEN.blit(rob_profile, (25 + b_img.get_width()/2 - rob_profile.get_width()/2, p_img.get_height()))
-        SCREEN.blit(pygame.Surface(rob.image.get_size()), rob.rect) ## magic mexians
         if rob.facing: 
             SCREEN.blit(rob.mask.to_surface(setcolor=(255, 255, 255, 255), unsetcolor=(0, 0, 0, 0)), rob.rect)
             SCREEN.blit(rob.image, rob.rect)
