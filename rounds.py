@@ -6,25 +6,40 @@ class round(pygame.sprite.Sprite):
         super(round, self).__init__()
         self.starting = False
         self.special = False
-        self.roundnum = 1
+        self.ended = False
+        self.roundnum = 0
+        self.end_dt = pygame.time.get_ticks()
+        self.start_dt = pygame.time.get_ticks()
 
-    def start_round(self, dt, blinker, e: enemy.Enemy, boss: boss.Boss):
+    def start_round(self, blinker, e: enemy.Enemy, boss: boss.Boss):
         self.starting = True
         text = FONT_48.render(f'round {self.roundnum} start', True, WHITE)
         if blinker: SCREEN.blit(text, (SCREEN_WIDTH//2-text.get_width()/2, 50))
-        if pygame.time.get_ticks() - dt >= 3000:
+        if pygame.time.get_ticks() - self.start_dt >= 3000:
             self.starting = False
-            if self.roundnum % 5 == 0:
-                self.special = True
-                return boss
-            else:
-                e.queue.add(enemy.SkeletonA(), enemy.SkeletonB())
+            if self.roundnum % 5 == 1:
+                e.queue_list = [[enemy.SkeletonA()], [enemy.SkeletonA(), enemy.SkeletonA()]]
+            if self.roundnum % 5 == 2:
+                e.queue_list = [[enemy.SkeletonB()], [enemy.SkeletonA(), enemy.SkeletonB()], [enemy.SkeletonA(), enemy.SkeletonB()]]
+            if self.roundnum % 5 == 3:
+                e.queue_list = [[enemy.SkeletonB(), enemy.SkeletonB()], [enemy.SkeletonA(), enemy.SkeletonB(), enemy.SkeletonB()]]
+            if self.roundnum % 5 == 4:
+                e.queue_list = [[enemy.SkeletonB(), enemy.SkeletonB(), enemy.SkeletonB()]]
+            e.queue.add(e.queue_list[0])
+                
     
     def update_round(self):
-        pass
+        self.ended = True
+        self.end_dt = pygame.time.get_ticks()
 
     def end_round(self):
-        pass
+        if pygame.time.get_ticks() - self.end_dt >= 5000:
+            self.ended = False
+            self.roundnum += 1
+            self.dt = pygame.time.get_ticks()
+            self.starting = True
+            self.special = False
+            self.start_dt = pygame.time.get_ticks()
     
         
             

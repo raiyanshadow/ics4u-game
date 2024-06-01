@@ -349,10 +349,6 @@ def play():
         elif rob.dashing:
             SCREEN.blit(pygame.transform.flip(pygame.transform.scale2x(pygame.image.load(f'./sprites/dash_fx{dash_frame+1}.png').convert_alpha()), True, False), (rob.rect.x, rob.rect.y))
         fader.set_alpha(fade)
-        if fade == 254: 
-            roundsystem.starting = True
-            roundsystem.timer = pygame.time.get_ticks()
-        if roundsystem.starting: roundsystem.start_round(roundsystem.timer, blinker, enemysystem, bosssystem)
         SCREEN.blit(fader, (0, 0))
         return True
         
@@ -361,6 +357,7 @@ def play():
     JUMP_TIMER = pygame.time.get_ticks()
     cooldown = 150
     fps = 150
+    
     while True:
         collided = []
         for obstacle in ground_group:
@@ -502,7 +499,13 @@ def play():
             clockobject.tick(FRAMES)
             continue
         i = 1
-        if enemysystem.queue is not None: enemysystem.update(rob)
+        if len(enemysystem.queue) == 0 and not roundsystem.ended and not roundsystem.starting: 
+            if len(enemysystem.queue_list) > 0: enemysystem.queue_list.pop(0)
+            if len(enemysystem.queue_list) == 0 and not roundsystem.ended and not roundsystem.starting: roundsystem.update_round()
+            elif len(enemysystem.queue_list) > 0: enemysystem.add_to_queue()
+        else: enemysystem.queue.update(rob)
+        if roundsystem.ended and not roundsystem.starting: roundsystem.end_round()
+        if roundsystem.starting: roundsystem.start_round(showing_round_text, enemysystem, bosssystem)
         if pygame.time.get_ticks() - updatec > 400:
             updatec = pygame.time.get_ticks()
             showing_round_text = not showing_round_text

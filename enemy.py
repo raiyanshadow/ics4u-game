@@ -15,11 +15,13 @@ def initialize_sprites(path, scaler):
 class Enemy(pygame.sprite.Sprite):
     def __init__(self):
         super(Enemy, self).__init__()
+        self.queue_list = []
         self.queue = pygame.sprite.Group()
-    def update(self, player: player.Player):
-        self.queue.update(player)
-
-
+        self.index = 0
+    def update(self):
+        self.queue.update()
+    def add_to_queue(self):
+        self.queue.add(self.queue_list[0])
 
 class SkeletonA(Enemy):
     def __init__(self):
@@ -42,6 +44,7 @@ class SkeletonA(Enemy):
         self.oldRect = self.rect.copy()
         self.attack_hitbox = False
         self.iframes = pygame.time.get_ticks()
+        self.speed = 1
 
     def animate(self, fps, player: player.Player):
         if self.frame >= len(self.sprites[self.state]) - 1: 
@@ -71,9 +74,8 @@ class SkeletonA(Enemy):
         
 
     def update(self, player: player.Player):
-        range_from_player = (abs(self.rect.centerx - player.rect.centerx)+50, abs(self.rect.centery - player.rect.centery))
-        print(player.attack_offset, (player.rect.x, player.rect.y))
-        pygame.draw.rect(SCREEN, RED, (range_from_player[0], range_from_player[1], 50, player.image.get_height()))
+        print(self.rect)
+        range_from_player = (abs(self.rect.centerx - player.rect.centerx + (100 if self.facing else -100)), abs(self.rect.centery - player.rect.centery + 50))
         if self.oldRect.size != self.rect.size:
             self.rect.top = self.rect.top + (self.oldRect.height - self.rect.height)
             if not self.facing: # if facing levfy6
@@ -96,8 +98,9 @@ class SkeletonA(Enemy):
             self.attacking = True
             self.frame = 0
             self.attack(player)
-        elif self.mask.overlap(player.attack_hitbox, range_from_player) and not self.state == 'Hit' and player.attackBool and pygame.time.get_ticks() - player.iframes > 400: 
-            player.iframes = pygame.time.get_ticks()
+        elif self.mask.overlap(player.attack_hitbox, range_from_player) and not self.state == 'Hit' and player.attackBool and pygame.time.get_ticks() - self.iframes > 600: 
+            self.iframes = pygame.time.get_ticks()
+            print('hit', self.hp, self.__class__.__name__.__str__())
             self.frame = 0
             self.hurt = True
             self.walking = False
@@ -131,7 +134,7 @@ class SkeletonA(Enemy):
         if self.frame >= 7: self.kill()
         
     def walk(self):
-        self.rect.x += 1 * (1 if self.facing else -1)    
+        self.rect.x += self.speed * (1 if self.facing else -1)    
         
 class SkeletonB(Enemy):
     def __init__(self):
@@ -154,6 +157,7 @@ class SkeletonB(Enemy):
         self.oldRect = self.rect.copy()
         self.attack_hitbox = False
         self.iframes = pygame.time.get_ticks()
+        self.speed = 1
 
     def animate(self, fps, player: player.Player):
         if self.frame >= len(self.sprites[self.state]) - 1: 
@@ -165,9 +169,9 @@ class SkeletonB(Enemy):
                 self.attacking = False
             if self.hurt: self.hurt = False
         if pygame.time.get_ticks() - self.dt > fps:
-            if (5 == self.frame or self.frame == 7d)  and self.attacking: 
+            if (7 == self.frame or self.frame == 11)  and self.attacking: 
                 attacking_surf = pygame.Surface(self.image.get_size())
-                offset = (abs(self.rect.centerx - player.rect.centerx), abs(self.rect.centery - player.rect.centery))
+                offset = (abs(self.rect.centerx - player.rect.centerx ), abs(self.rect.centery - player.rect.centery))
                 attacking_mask = pygame.mask.from_surface(attacking_surf)
                 if attacking_mask.overlap(player.mask, offset): 
                     player.hurt(10)
@@ -183,9 +187,7 @@ class SkeletonB(Enemy):
         
 
     def update(self, player: player.Player):
-        range_from_player = (abs(self.rect.centerx - player.rect.centerx)+50, abs(self.rect.centery - player.rect.centery))
-        print(player.attack_offset, (player.rect.x, player.rect.y))
-        pygame.draw.rect(SCREEN, RED, (range_from_player[0], range_from_player[1], 50, player.image.get_height()))
+        range_from_player = (abs(self.rect.centerx - player.rect.centerx + 100*(1 if self.facing else -1)), abs(self.rect.centery - player.rect.centery + 100))
         if self.oldRect.size != self.rect.size:
             self.rect.top = self.rect.top + (self.oldRect.height - self.rect.height)
             if not self.facing: # if facing levfy6
@@ -194,7 +196,7 @@ class SkeletonB(Enemy):
         self.facing = (self.rect.centerx < player.rect.centerx)
         flip = 1 if self.facing else -1
         fps = 100
-        offset = (abs(self.rect.centerx - player.rect.centerx), abs(self.rect.centery - player.rect.centery))
+        offset = (abs(self.rect.centerx - player.rect.centerx), abs(self.rect.centery - player.rect.centery+20))
         SCREEN.blit(FONT_24.render(str(offset), False, WHITE), (SCREEN_WIDTH//2, 50))
         sightbox = pygame.mask.from_surface(pygame.Surface((100, 100)))
         if self.attacking: self.attack(player)
@@ -208,8 +210,9 @@ class SkeletonB(Enemy):
             self.attacking = True
             self.frame = 0
             self.attack(player)
-        elif self.mask.overlap(player.attack_hitbox, range_from_player) and not self.state == 'Hit' and player.attackBool and pygame.time.get_ticks() - player.iframes > 400: 
+        elif self.mask.overlap(player.attack_hitbox, range_from_player) and not self.state == 'Hit' and player.attackBool and pygame.time.get_ticks() - self.iframes > 600: 
             self.iframes = pygame.time.get_ticks()
+            print('hit', self.hp, self.__class__.__name__.__str__())
             self.frame = 0
             self.hurt = True
             self.walking = False
@@ -244,5 +247,5 @@ class SkeletonB(Enemy):
         if self.frame >= 7: self.kill()
         
     def walk(self):
-        self.rect.x += 1 * (1 if self.facing else -1)    
+        self.rect.x += self.speed * (1 if self.facing else -1)    
         
