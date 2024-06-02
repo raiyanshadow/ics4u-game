@@ -521,9 +521,9 @@ def death():
     for i in range(0, math.ceil(SCREEN_WIDTH/64)):
         for j in range(-1, 2, 1):
             ground_group.add(grounds.Ground(i*64, SCREEN_HEIGHT-64, (0, 1), scroll))
-    ground_group.add(grounds.Ground(SCREEN_WIDTH//2-325, 455, (0, 2), scroll), grounds.Ground(SCREEN_WIDTH//2+325, 455, (0, 2), scroll), 
-                     grounds.Ground(SCREEN_WIDTH//2-325-64, 455, (0, 1), scroll), grounds.Ground(SCREEN_WIDTH//2+325-64, 455, (0, 1), scroll),
-                     grounds.Ground(SCREEN_WIDTH//2-325-64*2, 455, (0, 0), scroll), grounds.Ground(SCREEN_WIDTH//2+325-64*2, 455, (0, 0), scroll))
+    ground_group.add(grounds.Ground(SCREEN_WIDTH//2-200, 455, (0, 2), scroll), grounds.Ground(SCREEN_WIDTH//2+275, 455, (0, 2), scroll), 
+                     grounds.Ground(SCREEN_WIDTH//2-200-64, 455, (0, 1), scroll), grounds.Ground(SCREEN_WIDTH//2+275-64, 455, (0, 1), scroll),
+                     grounds.Ground(SCREEN_WIDTH//2-200-64*2, 455, (0, 0), scroll), grounds.Ground(SCREEN_WIDTH//2+275-64*2, 455, (0, 0), scroll))
     fadebg = 0
     fade = 0
     rob_profile = pygame.image.load(os.path.join('sprites', 'rob_profile.png')).convert_alpha()
@@ -547,7 +547,6 @@ def death():
     death = pygame.transform.scale(death, (SCREEN_WIDTH, death.get_height()))
     death.set_alpha(0)
     selected = 0
-    
                         
     def render(scroll):
         draw_bg(scroll)

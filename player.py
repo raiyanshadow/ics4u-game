@@ -54,7 +54,7 @@ class Player(pygame.sprite.Sprite):
       self.dashing = False
       self.dash_time = 0
       self.veldash = 0
-      self.hpcharge = 25
+      self.hpcharge = 60
       self.healing = False
       self.heal_time = 0
       self.no_hpcharges = 3
