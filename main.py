@@ -1,9 +1,9 @@
 import pygame.camera
-import player, enemy, pygame, random, math, time, os, sys, barrier_line, healthbar, grounds, rounds, boss
+import player, enemy, pygame, random, math, time, os, sys, healthbar, grounds, rounds, boss
 from constants import *
 from pygame.locals import *
 global update
-
+game_sounds = ['sound/Crumbling Castle.mp3', 'sound/Evil Death Roll.mp3', 'sound/Oddlife.mp3']
 done = False
 
 def true_resize(target_width, original_image):
@@ -54,7 +54,10 @@ def draw_controls(borders):
         else: SCREEN.blit(text, (controlrenders[i][1][0]-text.get_width()-15, controlrenders[i][1][1]+10), special_flags=BLEND_ALPHA_SDL2)
 
 pygame.init()
-
+sound_fx = pygame.mixer
+sound_fx.init()
+sound_fx.set_num_channels(32)
+sound_fx.music.load('./sound/Menu.mp3')
 #show fps
 fps = pygame.time.Clock()
 
@@ -142,8 +145,6 @@ def initial_screen():
     while True:
         for event in pygame.event.get():
             if event.type == KEYDOWN: return 
-            if event.type == MOUSEBUTTONDOWN:
-                print(pygame.mouse.get_pos())
             elif event.type == QUIT:
                 pygame.quit()
                 quit()
@@ -186,9 +187,8 @@ def menu():
             if controls:
                 if event.type == KEYDOWN:
                     if event.key == K_ESCAPE:
+                        sound_fx.Sound('./sound/Enter.wav').play()
                         controls = False
-                if event.type == MOUSEBUTTONDOWN:
-                    print(pygame.mouse.get_pos())
                 elif event.type == QUIT:
                     pygame.quit()
                     quit()
@@ -197,18 +197,20 @@ def menu():
                     pygame.quit()
                     quit()
                 selected = selected - (event.key == K_UP) + (event.key == K_DOWN)
+                if event.key == K_UP or event.key == K_DOWN:
+                    sound_fx.Sound('./sound/Select.wav').play()
                 if selected > 2: selected = 0
                 elif selected < 0: selected = 2
-                if event.key == K_RETURN and selected == 0:
-                    GAME_STATE = 'playing'
-                    return
-                if event.key == K_RETURN and selected == 1:
-                    controls = True
-                if event.key == K_RETURN and selected == 2:
-                    pygame.quit()
-                    quit() 
-            elif event.type == MOUSEBUTTONDOWN:
-                print(pygame.mouse.get_pos())
+                if event.key == K_RETURN:
+                    sound_fx.Sound('./sound/Enter.wav').play() 
+                    if selected == 0:
+                        GAME_STATE = 'playing'
+                        return
+                    if selected == 1:
+                        controls = True
+                    if selected == 2:
+                        pygame.quit()
+                        quit() 
             elif event.type == QUIT:
                 pygame.quit()
                 quit()
@@ -258,6 +260,9 @@ deathfade = 0
 
 def play():
     global GAME_STATE, controls
+    sound_fx.music.fadeout(3000)
+    sound_fx.music.unload()
+    sound_fx.music.set_volume(1)
     rob_profile = pygame.image.load(os.path.join('sprites', 'rob_profile.png')).convert_alpha()
     rob_profile = pygame.transform.scale(rob_profile, (112, 112))
     stagex = SCREEN_WIDTH*2
@@ -359,6 +364,13 @@ def play():
     fps = 150
     
     while True:
+        if GAME_STATE == 'paused' or rob.hp/rob.maxhp <= 0.4: sound_fx.music.set_volume(0.1)
+        else: sound_fx.music.set_volume(0.3
+                                        )
+        if not sound_fx.music.get_busy():
+            sound_fx.music.unload()
+            sound_fx.music.load(random.choice(game_sounds))
+            sound_fx.music.play(fade_ms=100)
         collided = []
         for obstacle in ground_group:
             rob.falling = False
@@ -371,7 +383,7 @@ def play():
                 rob.falling = True
                 rob.jumping = False
                 
-            if (rob.rect.bottom-25 > col.rect.top and rob.rect.top < col.rect.top):
+            if (rob.rect.bottom-27 > col.rect.top and rob.rect.top < col.rect.top):
                 rob.rect.y = col.rect.y-rob.rect.height
                 rob.vel.y = 0
                 rob.jumping = False
@@ -386,6 +398,8 @@ def play():
                 quit()
             if event.type == KEYDOWN:
                 if event.key == K_z and not rob.jumping and not rob.falling and not rob.healing:
+                    rob.jump_sound[0].play()
+                    rob.jump_sound[0].set_volume(1000)
                     rob.vel.y = 22
                     rob.a_frame = 0
                     rob.jumping = True
@@ -393,6 +407,7 @@ def play():
                     rob.jumpinganim = len(rob.sprites['jump'])
 
                 if event.key == K_ESCAPE:
+                    sound_fx.Sound('./sound/Enter.wav').play()
                     if controls:
                         controls = False
                         continue
@@ -416,35 +431,39 @@ def play():
 
                 if GAME_STATE == 'paused' and not controls and not warning:
                     selected = selected - (event.key == K_UP) + (event.key == K_DOWN)
+                    if event.key == K_UP or event.key == K_DOWN: 
+                        sound_fx.Sound('./sound/Select.wav').play()
                     if selected > 3: selected = 0
                     elif selected < 0: selected = 3
-                    if event.key == K_RETURN and selected == 0:
-                        GAME_STATE = 'playing'
-                        continue
-                    if event.key == K_RETURN and selected == 1:
-                        controls = True
-                        continue
-                    if event.key == K_RETURN and selected == 2:
-                        warning = True
-                        continue
-                    if event.key == K_RETURN and selected == 3:
-                        warning = True
-                        continue
+                    if event.key == K_RETURN:
+                        sound_fx.Sound('./sound/Enter.wav').play()
+                        if selected == 0:
+                            GAME_STATE = 'playing'
+                            continue
+                        if selected == 1:
+                            controls = True
+                            continue
+                        if selected == 2 or selected == 3:
+                            warning = True
+                            continue
                 if warning:
                     selected2 = selected2 - (event.key == K_LEFT) + (event.key == K_RIGHT)
-                
+                    if event.key == K_LEFT or event.key == K_RIGHT: 
+                        sound_fx.Sound('./sound/Select.wav').play()
                     if selected2 > 1: selected2 = 0
                     elif selected2 < 0: selected2 = 1
                 
-                    if event.key == K_RETURN and selected2 == 1:
-                        warning = False
-                    if event.key == K_RETURN and selected2 == 0:
-                        if selected == 2:
-                            GAME_STATE = 'menu'
-                            return 
-                        if selected == 3:
-                            pygame.quit()
-                            quit()
+                    if event.key == K_RETURN:
+                        sound_fx.Sound('./sound/Enter.wav').play()
+                        if selected2 == 1:
+                            warning = False
+                        if event.key == K_RETURN and selected2 == 0:
+                            if selected == 2:
+                                GAME_STATE = 'menu'
+                                return 
+                            if selected == 3:
+                                pygame.quit()
+                                quit()
                 if event.key == K_x and not rob.attackBool:
                     rob.attack()
         rob.update(pygame.key.get_pressed(), JUMP_TIMER)
@@ -509,8 +528,6 @@ def play():
         if pygame.time.get_ticks() - updatec > 400:
             updatec = pygame.time.get_ticks()
             showing_round_text = not showing_round_text
-        
-
         show_fps(SCREEN, clockobject)
         pygame.display.flip()
         clockobject.tick(FRAMES)
@@ -634,6 +651,7 @@ def death():
             timer[3] = pygame.time.get_ticks()
             timerbool[2] = True
     timer[4] = pygame.time.get_ticks()
+    sound_fx.Sound('./sound/Death_Screen.mp3').play()
     while not timerbool[3]:
         if pygame.time.get_ticks() - timer[4] > 25:
             timer[4] = pygame.time.get_ticks()
@@ -668,17 +686,26 @@ def death():
             
 clockobject = pygame.time.Clock()
 
+sound_fx.music.play(-1, fade_ms=100)
 initialize()
 initial_screen()
 menu()
 fadeout()
-rob.state = 'idle'
 GAME_STATE = 'playing'
 while True:
     if GAME_STATE == 'playing':
         rob.__init__()
         play()
+    elif GAME_STATE  == 'paused':
+        sound_fx.music.set_volume(0.4)
     elif GAME_STATE == 'menu':
+        sound_fx.music.fadeout(500)
+        sound_fx.music.unload()
+        sound_fx.music.set_volume(1)
+        sound_fx.music.load('./sound/Menu.mp3')
+        sound_fx.music.play(-1, fade_ms=100)
+        rob.heartbeat.set_volume(0)
         fadeout()
         menu()
+        fadeout()
 

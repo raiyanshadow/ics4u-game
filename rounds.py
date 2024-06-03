@@ -14,11 +14,11 @@ class round(pygame.sprite.Sprite):
     def start_round(self, blinker, e: enemy.Enemy, boss: boss.Boss):
         self.starting = True
         text = FONT_48.render(f'round {self.roundnum} start', True, WHITE)
-        if blinker: SCREEN.blit(text, (SCREEN_WIDTH//2-text.get_width()/2, 50))
+        if blinker: SCREEN.blit(text, (SCREEN_WIDTH//2-text.get_width()/2, 100))
         if pygame.time.get_ticks() - self.start_dt >= 3000:
             self.starting = False
             if self.roundnum % 5 == 1:
-                e.queue_list = [[enemy.Bat()], [enemy.SkeletonA()]]
+                e.queue_list = [[enemy.Bringer()], [enemy.SkeletonA()]]
             if self.roundnum % 5 == 2:
                 e.queue_list = [[enemy.SkeletonB(), enemy.Bat()], [enemy.SkeletonA(), enemy.SkeletonB()]]
             if self.roundnum % 5 == 3:

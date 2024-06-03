@@ -62,9 +62,24 @@ class Player(pygame.sprite.Sprite):
       self.attack_offset = (self.rect.centerx + 100, abs(self.rect.centery - self.image.get_height()//2))
       self.attack_value = 66
       self.jump_hitbox = pygame.mask.from_surface(pygame.Surface((30, 30)))
-
+      self.score = 0
+      self.bosses_killed = 0
+      self.player_sound = pygame.mixer
+      self.player_sound.init()
+      self.crit = False
+      self.heartbeat = pygame.mixer.Sound('./sound/rob/Heartbeat.mp3')
+      self.heartbeat.play(-1)
+      self.heartbeat.set_volume(0)
+      self.dash_sound = [pygame.mixer.Sound('./sound/rob/Dash.wav'), False]
+      self.hurt_sound = [pygame.mixer.Sound('./sound/rob/Hurt.wav'), False]
+      self.jump_sound = [pygame.mixer.Sound('./sound/rob/Jump.wav'), False]
+      self.walk_sound = [pygame.mixer.Sound('./sound/rob/Walk.wav'), False]
+      self.attack_sound = [pygame.mixer.Sound('./sound/rob/Attack.mp3'), False]
+      self.heal_sound = [pygame.mixer.Sound('./sound/rob/Heal.mp3'), False]
 
    def attack(self):
+      self.attack_sound[0].play()
+      self.attack_sound[0].set_volume(5000)
       self.a_frame = 0
       self.attackBool = True
       self.state = random.choice(self.attacks)
@@ -72,18 +87,27 @@ class Player(pygame.sprite.Sprite):
       self.attacking = len(self.sprites[self.state])
 
    def hurt(self, hit_value):
+      if not self.hurt_sound[1]: 
+         self.hurt_sound[0].play()
+         self.hurt_sound[0].set_volume(100)
+         self.hurt_sound[1] = True
       if pygame.time.get_ticks() - self.iframes > 1000:
          self.a_frame = 0
+         self.hurt_sound[1] = False
          self.state = 'hurt'
          self.hp -= hit_value
          self.hurting = len(self.sprites[self.state])
+         if self.hp / self.maxhp <= 0.4 and not self.crit:
+            self.heartbeat.set_volume(10)
+            self.crit = True
          if self.hp <= 0 and self.dead == False:
             self.dead = True
             self.state = 'deathanimation'
+            self.player_sound.music.load('./sound/rob/Death.wav')
+            self.player_sound.music.play()
          self.iframes = pygame.time.get_ticks()
 
    def jump_update(self, fps):
-      
       self.state = 'jump'
       self.rect.y -= self.vel.y
       self.vel.y -= GRAVITY
@@ -97,18 +121,30 @@ class Player(pygame.sprite.Sprite):
       self.vel.y -= GRAVITY
 
    def dash(self, dt):
+      if not self.dash_sound[1]: 
+         self.dash_sound[0].play()
+         self.dash_sound[0].set_volume(100)
+         self.dash_sound[1] = True
       self.rect.x += self.veldash
       self.veldash -= 0.1
       if dt - self.dash_time >= 300:
+         self.dash_sound[1] = False
          self.veldash = 0
          self.dashing = False
          self.dash_time = 0
    
    def heal(self, dt):
       self.state == 'heal'
+      threshold = False
       if dt - self.heal_time >= 1300:
+         self.heal_sound[0].play()
+         if self.hp / self.maxhp <= 0.4:
+            threshold = True
          self.hp += self.hpcharge
          self.hp = min(self.hp, self.maxhp)
+         if threshold:
+            self.heartbeat.set_volume(0)
+            self.crit = False
          self.healing = False
          self.heal_time = 0
          self.no_hpcharges = max(0, self.no_hpcharges-1)
