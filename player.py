@@ -76,6 +76,9 @@ class Player(pygame.sprite.Sprite):
       self.walk_sound = [pygame.mixer.Sound('./sound/rob/Walk.wav'), False]
       self.attack_sound = [pygame.mixer.Sound('./sound/rob/Attack.mp3'), False]
       self.heal_sound = [pygame.mixer.Sound('./sound/rob/Heal.mp3'), False]
+      self.hp_change = 0
+      self.attack_value_change = 0
+      self.no_hpcharges_change = 0
 
    def attack(self):
       self.attack_sound[0].play()

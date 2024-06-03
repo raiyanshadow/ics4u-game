@@ -24,7 +24,7 @@ class Enemy(pygame.sprite.Sprite):
         self.queue.add(self.queue_list[0])
 
 class SkeletonA(Enemy):
-    def __init__(self):
+    def __init__(self, player: player.Player):
         super(SkeletonA, self).__init__()
         self.sprites = initialize_sprites('/round1-4/skeletonA', 4)
         self.image = self.sprites['Idle'][0]
@@ -36,7 +36,7 @@ class SkeletonA(Enemy):
         self.attacking = False
         self.hurt = False
         self.state = 'Idle'
-        self.hp = 200
+        self.hp = 200 + (75*(player.bosses_killed))
         self.frame = 0
         self.facing = True
         self.dt = pygame.time.get_ticks()
@@ -45,7 +45,7 @@ class SkeletonA(Enemy):
         self.attack_hitbox = False
         self.iframes = pygame.time.get_ticks()
         self.speed = 1
-        self.attack_val = 15
+        self.attack_val = 15 + (12.5*(player.bosses_killed))
 
     def animate(self, fps, player: player.Player):
         if self.frame == len(self.sprites[self.state]) - 1: 
@@ -133,7 +133,7 @@ class SkeletonA(Enemy):
         self.rect.x += self.speed * (1 if self.facing else -1)    
         
 class SkeletonB(Enemy):
-    def __init__(self):
+    def __init__(self, player):
         super(SkeletonB, self).__init__()
         self.sprites = initialize_sprites('/round1-4/skeletonB', 4)
         self.image = self.sprites['Idle'][0]
@@ -243,7 +243,7 @@ class SkeletonB(Enemy):
         self.rect.x += self.speed * (1 if self.facing else -1)    
         
 class Bat(Enemy):
-    def __init__(self):
+    def __init__(self, player: player.Player):
         super(Bat, self).__init__()
         self.sprites = initialize_sprites('/round1-4/bat', 4)
         self.image = self.sprites['Idle'][0]
@@ -377,7 +377,7 @@ class Bat(Enemy):
         self.rect.y += self.speed
         
 class Bringer(Enemy):
-    def __init__(self):
+    def __init__(self, player: player.Player):
         super(Bringer, self).__init__()
         self.sprites = initialize_sprites('/round1-4/bringerofdeath', 3)
         self.image = self.sprites['Idle'][0]

@@ -523,8 +523,8 @@ def play():
             if len(enemysystem.queue_list) == 0 and not roundsystem.ended and not roundsystem.starting: roundsystem.update_round()
             elif len(enemysystem.queue_list) > 0: enemysystem.add_to_queue()
         else: enemysystem.queue.update(rob)
-        if roundsystem.ended and not roundsystem.starting: roundsystem.end_round()
-        if roundsystem.starting: roundsystem.start_round(showing_round_text, enemysystem, bosssystem)
+        if roundsystem.ended and not roundsystem.starting: roundsystem.end_round(rob, hbar)
+        if roundsystem.starting: roundsystem.start_round(showing_round_text, enemysystem, bosssystem, rob)
         if pygame.time.get_ticks() - updatec > 400:
             updatec = pygame.time.get_ticks()
             showing_round_text = not showing_round_text
