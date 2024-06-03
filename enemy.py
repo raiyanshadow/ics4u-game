@@ -409,6 +409,7 @@ class Bringer(Enemy):
         self.hurt_sound = [pygame.mixer.Sound('./sound/enemy/round1-4/bringerofdeath/Hurt.mp3'), False]
         self.spell_sound = [pygame.mixer.Sound('./sound/enemy/round1-4/bringerofdeath/Spell.mp3'), False]
         self.walk_sound = [pygame.mixer.Sound('./sound/enemy/round1-4/bringerofdeath/Walk.wav'), False]
+        self.death_sound = [pygame.mixer.Sound('./sound/enemy/round1-4/bringerofdeath/Death.mp3'), False]
 
     def animate(self, fps, player: player.Player):
         if self.frame == len(self.sprites[self.state]) - 1: 
@@ -503,6 +504,11 @@ class Bringer(Enemy):
                 self.hurt_sound[1] = True
             if self.hp <= 0 and not self.dead: 
                 self.dead = True
+                self.walk_sound[0].stop()
+                self.attack_sound[0].stop()
+                self.hurt_sound[0].stop()
+                self.death_sound[0].play()
+                self.death_sound[0].set_volume(0.5)
                 self.state = 'Death'
         if random.randint(0, 1000) == 1 and not self.casting and not self.spell and not self.attacking and not self.hurt: 
             if not self.spell_sound[1]:
