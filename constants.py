@@ -1,6 +1,5 @@
 import pygame, os, time
 
-globals = globals(); 
 GAME_STATE = 'initializing'
 ISPAUSED = False
 SCREEN_HEIGHT = 728
@@ -21,6 +20,18 @@ SCROLL_THRESH = 300
 FRAMES = 144
 GRAVITY = 1
 JUMP_TIMER = 0
+SCORE = 0
+DAMAGE_DEALT = 0
+DAMAGE_RECIEVED = 0
+HP_REFILLED = 0
+DASHES = 0
+JUMPS = 0
+TIME_PLAYED = 0
+ROUNDS = 0
+SKELETONA = 0
+SKELETONB = 0
+BAT = 0
+BRINGER = 0
 
 def clip_image(image, clip):
     image.set_clip(clip)

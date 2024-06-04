@@ -1,5 +1,5 @@
 import pygame, random, constants, os, player
-from constants import *
+from constants import (SCREEN, SKELETONA, SKELETONB, BAT, BRINGER, DAMAGE_DEALT, WHITE)
 
 def initialize_sprites(path, scaler):
     fpath = './sprites/enemy/' + path
@@ -36,7 +36,7 @@ class SkeletonA(Enemy):
         self.attacking = False
         self.hurt = False
         self.state = 'Idle'
-        self.hp = 200 + (75*(player.bosses_killed))
+        self.hp = 200 + (250*(player.bosses_killed))
         self.frame = 0
         self.facing = True
         self.dt = pygame.time.get_ticks()
@@ -45,8 +45,13 @@ class SkeletonA(Enemy):
         self.attack_hitbox = False
         self.iframes = pygame.time.get_ticks()
         self.speed = 1
-        self.attack_val = 15 + (12.5*(player.bosses_killed))
-
+        self.attack_val = 15 + (10*(player.bosses_killed))
+        self.hurt_sound = [pygame.mixer.Sound('./sound/enemy/round1-4/skeletonA/Hurt.wav'), False]
+        self.attack_sound = [pygame.mixer.Sound('./sound/enemy/round1-4/skeletonA/Attack.wav'), False]
+        self.death_sound = [pygame.mixer.Sound('./sound/enemy/round1-4/skeletonA/Death.wav'), False]
+        self.walk_sound = pygame.mixer.Sound('./sound/enemy/round1-4/skeletonA/Walk.mp3')
+        self.walk_sound.play(-1)
+        self.walk_sound.set_volume(0)
     def animate(self, fps, player: player.Player):
         if self.frame == len(self.sprites[self.state]) - 1: 
             self.frame = 0
@@ -55,9 +60,13 @@ class SkeletonA(Enemy):
                 self.walking = False
             if self.attacking: 
                 self.attacking = False
-            if self.hurt: self.hurt = False
+                self.attack_sound[1] = False
+            if self.hurt: 
+                self.hurt = False
+                self.hurt_sound[1] = False
             if self.dead: 
-                player.score += 30 + ((player.bosses_killed + 1) * (20))
+                constants.SKELETONA += 1
+                player.score += 30 + (player.bosses_killed * (20))
                 self.kill()
         if pygame.time.get_ticks() - self.dt > fps:
             if 6 < self.frame  < 12 and self.attacking: 
@@ -85,10 +94,8 @@ class SkeletonA(Enemy):
                 self.rect.right = self.rect.right + (self.oldRect.width - self.rect.width)
             self.oldRect = self.rect.copy()
         self.facing = (self.rect.centerx < player.rect.centerx)
-        flip = 1 if self.facing else -1
         fps = 100
         offset = (abs(self.rect.centerx - player.rect.centerx), abs(self.rect.centery - player.rect.centery))
-        SCREEN.blit(FONT_24.render(str(offset), False, WHITE), (SCREEN_WIDTH//2, 50))
         sightbox = pygame.mask.from_surface(pygame.Surface((180, 100)))
         if self.attacking: self.attack(player)
         x = sightbox.overlap(sightbox, offset)
@@ -97,12 +104,19 @@ class SkeletonA(Enemy):
             self.animate(fps, player)
             return
         elif x and not self.attacking and abs(offset[1]) <= 20: 
+            if not self.attack_sound[1]:
+                self.attack_sound[0].play()
+                self.attack_sound[0].set_volume(0.1)
+                self.attack_sound[1] = True
             self.state = 'Attack'
             self.attacking = True
             self.frame = 0
             self.attack(player)
         elif self.mask.overlap(player.attack_hitbox, range_from_player) and not self.state == 'Hit' and player.attackBool and pygame.time.get_ticks() - self.iframes > 600: 
+            constants.DAMAGE_DEALT += player.attack_value
             self.iframes = pygame.time.get_ticks()
+            self.hurt_sound[0].play()
+            self.hurt_sound[0].set_volume(100)
             self.frame = 0
             self.hurt = True
             self.walking = False
@@ -110,10 +124,16 @@ class SkeletonA(Enemy):
             self.state = 'Hit'
             self.hp -= player.attack_value
             if self.hp <= 0 and not self.dead: 
+                self.walk_sound.stop()
+                self.death_sound[0].play()
+                self.death_sound[0].set_volume(100)
                 self.state = 'Dead'
                 self.dead = True
         if self.walking and self.state == 'Walk':
-            self.walk()
+            if offset[0] > 10:
+                self.walk_sound.set_volume(100)
+                self.walk()
+        else: self.walk_sound.set_volume(0)
         if self.frame != 0: self.animate(fps, player)
         elif self.state == 'Idle' or self.state == 'Walk':
             choice = random.choice(['Idle', 'Walk'])
@@ -133,7 +153,7 @@ class SkeletonA(Enemy):
         self.rect.x += self.speed * (1 if self.facing else -1)    
         
 class SkeletonB(Enemy):
-    def __init__(self, player):
+    def __init__(self, player: player.Player):
         super(SkeletonB, self).__init__()
         self.sprites = initialize_sprites('/round1-4/skeletonB', 4)
         self.image = self.sprites['Idle'][0]
@@ -145,7 +165,7 @@ class SkeletonB(Enemy):
         self.attacking = False
         self.hurt = False
         self.state = 'Idle'
-        self.hp = 400
+        self.hp = 400 + (500 * player.bosses_killed)
         self.frame = 0
         self.facing = True
         self.dt = pygame.time.get_ticks()
@@ -154,8 +174,13 @@ class SkeletonB(Enemy):
         self.attack_hitbox = False
         self.iframes = pygame.time.get_ticks()
         self.speed = 1
-        self.attack_val = 25
-
+        self.attack_val = 25 + (20 * player.bosses_killed)
+        self.hurt_sound = [pygame.mixer.Sound('./sound/enemy/round1-4/skeletonB/Hurt.wav'), False]
+        self.death_sound = [pygame.mixer.Sound('./sound/enemy/round1-4/skeletonB/Death.mp3'), False]
+        self.attack_sound = [pygame.mixer.Sound('./sound/enemy/round1-4/skeletonB/Attack.wav'), False]
+        self.walk_sound = pygame.mixer.Sound('./sound/enemy/round1-4/skeletonB/Walk.mp3')
+        self.walk_sound.play(-1)
+        self.walk_sound.set_volume(0)
     def animate(self, fps, player: player.Player):
         if self.frame == len(self.sprites[self.state]) - 1: 
             self.frame = 0
@@ -164,9 +189,13 @@ class SkeletonB(Enemy):
                 self.walking = False
             if self.attacking: 
                 self.attacking = False
-            if self.hurt: self.hurt = False
+                self.attack_sound[1] = False
+            if self.hurt: 
+                self.hurt = False
+                self.hurt_sound[1] = False
             if self.dead: 
-                player.score += 50 + ((player.bosses_killed + 1) * (20))
+                constants.SKELETONB += 1
+                player.score += 50 + (player.bosses_killed * 20)
                 self.kill()
         if pygame.time.get_ticks() - self.dt > fps:
             if (4 == self.frame or self.frame == 8)  and self.attacking: 
@@ -197,7 +226,6 @@ class SkeletonB(Enemy):
         flip = 1 if self.facing else -1
         fps = 100
         offset = (abs(self.rect.centerx - player.rect.centerx), abs(self.rect.centery - player.rect.centery+20))
-        SCREEN.blit(FONT_24.render(str(offset), False, WHITE), (SCREEN_WIDTH//2, 50))
         sightbox = pygame.mask.from_surface(pygame.Surface((100, 100)))
         if self.attacking: self.attack(player)
         x = sightbox.overlap(sightbox, offset)
@@ -210,7 +238,14 @@ class SkeletonB(Enemy):
             self.attacking = True
             self.frame = 0
             self.attack(player)
+            if not self.attack_sound[1]:
+                self.attack_sound[0].play()
+                self.attack_sound[0].set_volume(100)
+                self.attack_sound[1] = True
         elif self.mask.overlap(player.attack_hitbox, range_from_player) and not self.state == 'Hit' and player.attackBool and pygame.time.get_ticks() - self.iframes > 600: 
+            constants.DAMAGE_DEALT += player.attack_value
+            self.hurt_sound[0].play()
+            self.hurt_sound[0].set_volume(100)
             self.iframes = pygame.time.get_ticks()
             self.frame = 0
             self.hurt = True
@@ -219,10 +254,16 @@ class SkeletonB(Enemy):
             self.state = 'Hit'
             self.hp -= player.attack_value
             if self.hp <= 0 and not self.dead: 
+                self.walk_sound.stop()
+                self.death_sound[0].play()
                 self.dead = True
                 self.state = 'Death'
         if self.walking and self.state == 'Walk':
-            self.walk()
+            if offset[0] > 20:
+                self.walk()
+                self.walk_sound.set_volume(100)
+        else: 
+            self.walk_sound.set_volume(0)
         if self.frame != 0: self.animate(fps, player)
         elif self.state == 'Idle' or self.state == 'Walk':
             choice = random.choice(['Idle', 'Walk'])
@@ -255,7 +296,7 @@ class Bat(Enemy):
         self.attacking = False
         self.hurt = False
         self.state = 'Idle'
-        self.hp = 50
+        self.hp = 50 + (200 * player.bosses_killed)
         self.frame = 0
         self.facing = True
         self.dt = pygame.time.get_ticks()
@@ -264,7 +305,7 @@ class Bat(Enemy):
         self.attack_hitbox = False
         self.iframes = pygame.time.get_ticks()
         self.speed = 1
-        self.attack_val = 10
+        self.attack_val = 10 + (15 * player.bosses_killed)
         self.attack_sound = [pygame.mixer.Sound('./sound/enemy/round1-4/bat/Attack.wav'), False]
         self.hurt_sound = [pygame.mixer.Sound('./sound/enemy/round1-4/bat/Hurt.wav'), False]
         self.move_sound = [pygame.mixer.Sound('./sound/enemy/round1-4/bat/Move.wav'), False]
@@ -280,7 +321,8 @@ class Bat(Enemy):
                 self.attack_sound[1] = False
             if self.hurt: self.hurt = False
             if self.dead: 
-                player.score += 15 + ((player.bosses_killed + 1) * (20))
+                constants.BAT += 1
+                player.score += 15 + (player.bosses_killed * 30)
                 self.attack_sound[0].stop()
                 self.hurt_sound[0].stop()
                 self.move_sound[0].stop()
@@ -314,7 +356,6 @@ class Bat(Enemy):
         flip = 1 if self.facing else -1
         fps = 100
         offset = (abs(self.rect.centerx - player.rect.centerx), abs(self.rect.centery - player.rect.centery))
-        SCREEN.blit(FONT_24.render(str(offset), False, WHITE), (SCREEN_WIDTH//2, 50))
         sightbox = pygame.mask.from_surface(pygame.Surface((100, 100)))
         if self.attacking: self.attack(player)
         x = sightbox.overlap(sightbox, offset)
@@ -328,6 +369,7 @@ class Bat(Enemy):
             self.frame = 0
             self.attack(player)
         elif self.mask.overlap(player.attack_hitbox, range_from_player) and not self.state == 'Hit' and player.attackBool and pygame.time.get_ticks() - self.iframes > 600: 
+            constants.DAMAGE_DEALT += player.attack_value
             self.iframes = pygame.time.get_ticks()
             self.frame = 0
             self.hurt = True
@@ -344,7 +386,7 @@ class Bat(Enemy):
                 self.move_sound[0].play(-1) 
                 self.move_sound[0].set_volume(100)
                 self.move_sound[1] = True
-            self.move_X()
+            if offset[0] > 10:self.move_X()
             if self.rect.y <= player.rect.y: self.move_Y()
             
         if self.frame != 0: self.animate(fps, player)
@@ -377,6 +419,7 @@ class Bat(Enemy):
         self.rect.y += self.speed
         
 class Bringer(Enemy):
+    global BRINGER
     def __init__(self, player: player.Player):
         super(Bringer, self).__init__()
         self.sprites = initialize_sprites('/round1-4/bringerofdeath', 3)
@@ -389,7 +432,7 @@ class Bringer(Enemy):
         self.attacking = False
         self.hurt = False
         self.state = 'Idle'
-        self.hp = 400
+        self.hp = 400 + (500 * player.bosses_killed)
         self.frame = 0
         self.facing = True
         self.dt = pygame.time.get_ticks()
@@ -398,8 +441,8 @@ class Bringer(Enemy):
         self.attack_hitbox = False
         self.iframes = pygame.time.get_ticks()
         self.speed = 1
-        self.raw_attack_val = 30
-        self.spell_attack_val = 20
+        self.raw_attack_val = 30 + (20 * player.bosses_killed)
+        self.spell_attack_val = 20 + (15 * player.bosses_killed)
         self.casting = False
         self.spell = False
         self.spellframe = 0
@@ -426,7 +469,8 @@ class Bringer(Enemy):
                 self.hurt_sound[0].stop()
                 self.hurt_sound[1] = False
             if self.dead: 
-                player.score += 120 + ((player.bosses_killed + 1) * (20))
+                constants.BRINGER += 1
+                player.score += 120 + (player.bosses_killed * 20)
                 self.kill()
             if self.casting: 
                 self.casting = False
@@ -473,7 +517,6 @@ class Bringer(Enemy):
         self.facing = (self.rect.centerx < player.rect.centerx)
         fps = 100
         offset = (abs(self.rect.centerx - player.rect.centerx), abs(self.rect.centery - player.rect.centery+70))
-        SCREEN.blit(FONT_24.render(str(offset), False, WHITE), (SCREEN_WIDTH//2, 50))
         sightbox = pygame.mask.from_surface(pygame.Surface((100, 100)))
         if self.attacking: self.attack(player)
         x = sightbox.overlap(sightbox, offset)
@@ -492,6 +535,7 @@ class Bringer(Enemy):
             self.frame = 0
             self.attack(player)
         elif self.mask.overlap(player.attack_hitbox, range_from_player) and not self.state == 'Hurt' and player.attackBool and pygame.time.get_ticks() - self.iframes > 600: 
+            constants.DAMAGE_DEALT += player.attack_value
             self.iframes = pygame.time.get_ticks()
             self.frame = -1
             self.hurt = True

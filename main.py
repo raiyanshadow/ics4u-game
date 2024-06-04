@@ -1,11 +1,10 @@
-import pygame.camera
+import constants
 import player, enemy, pygame, random, math, time, os, sys, healthbar, grounds, rounds, boss
 from constants import *
 from pygame.locals import *
 global update
 game_sounds = ['sound/Crumbling Castle.mp3', 'sound/Evil Death Roll.mp3', 'sound/Oddlife.mp3']
 done = False
-
 def true_resize(target_width, original_image):
     size = original_image.get_width()*original_image.get_height()
     wpercent = target_width / float(size)
@@ -257,9 +256,11 @@ def fadeout():
     GAME_STATE = 'playing'
     return
 deathfade = 0
-
+pause_time_total = 0
 def play():
-    global GAME_STATE, controls
+    global GAME_STATE, controls, TIME_PLAYED, pause_time_total, JUMPS, DASHES, ROUNDS
+    pause_time = 0
+    TIME_PLAYED = pygame.time.get_ticks()
     sound_fx.music.fadeout(3000)
     sound_fx.music.unload()
     sound_fx.music.set_volume(1)
@@ -398,6 +399,7 @@ def play():
                 quit()
             if event.type == KEYDOWN:
                 if event.key == K_z and not rob.jumping and not rob.falling and not rob.healing:
+                    JUMPS += 1
                     rob.jump_sound[0].play()
                     rob.jump_sound[0].set_volume(1000)
                     rob.vel.y = 22
@@ -414,16 +416,21 @@ def play():
                     if warning: 
                         warning = False
                         continue
-                    if GAME_STATE == 'playing': GAME_STATE = 'paused'
-                    else: GAME_STATE = 'playing'
+                    if GAME_STATE == 'playing': 
+                        pause_time = pygame.time.get_ticks()
+                        GAME_STATE = 'paused'
+                    else: 
+                        GAME_STATE = 'playing'
+                        pause_time_total += pygame.time.get_ticks() - pause_time
                 
                 if event.key == K_LSHIFT and not rob.dashing and not rob.healing:
                     rob.dashing = True
                     rob.dash_time = pygame.time.get_ticks()
                     rob.veldash = 15*(-1 if not rob.facing else 1)
                     next_dash_frame = rob.dash_time
+                    DASHES += 1
                 
-                if event.key == K_c and rob.no_hpcharges > 0:
+                if event.key == K_c and rob.no_hpcharges > 0 and not rob.healing:
                     rob.a_frame = 0
                     rob.healing = True
                     rob.state == 'heal'
@@ -468,6 +475,9 @@ def play():
                     rob.attack()
         rob.update(pygame.key.get_pressed(), JUMP_TIMER)
         if rob.dead:
+                pygame.mixer.stop()
+                rob.heartbeat.play()
+                ROUNDS = roundsystem.roundnum
                 death()
                 return
         if fade > 0: fade -= 0.5
@@ -533,7 +543,15 @@ def play():
         clockobject.tick(FRAMES)
 
 def death():
-    global fader, fade, GAME_STATE, scroll
+    import csv
+    global fader, fade, GAME_STATE, scroll, pause_time_total
+    global TIME_PLAYED, SCORE
+    SCORE = rob.score
+    TIME_PLAYED = pygame.time.get_ticks() - TIME_PLAYED - pause_time_total
+    pause_time_total = 0
+    with open('stats/stats.csv', 'a', newline='') as f:
+        write = csv.writer(f)
+        write.writerow([SCORE, ROUNDS, constants.DAMAGE_DEALT, constants.DAMAGE_RECIEVED, constants.HP_REFILLED, constants.SKELETONA, constants.SKELETONB, constants.BAT, constants.BRINGER, DASHES, JUMPS, round(TIME_PLAYED/1000, 2)])
     ground_group = pygame.sprite.Group()
     for i in range(0, math.ceil(SCREEN_WIDTH/64)):
         for j in range(-1, 2, 1):
@@ -699,6 +717,9 @@ while True:
     elif GAME_STATE  == 'paused':
         sound_fx.music.set_volume(0.4)
     elif GAME_STATE == 'menu':
+        ROUNDS=0; SCORE=0; HP_REFILLED=0; DAMAGE_DEALT=0; DAMAGE_RECIEVED=0
+        SKELETONA=0; SKELETONB=0; BAT=0; BRINGER=0; JUMPS=0; DASHES = 0; TIME_PLAED = 0
+        pause_time_total = 0
         sound_fx.music.fadeout(500)
         sound_fx.music.unload()
         sound_fx.music.set_volume(1)
@@ -708,4 +729,3 @@ while True:
         fadeout()
         menu()
         fadeout()
-

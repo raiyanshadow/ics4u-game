@@ -1,6 +1,5 @@
-import pygame, os, time, random
+import pygame, os, time, random, constants
 from pygame.locals import *
-from constants import *
 
 vec = pygame.math.Vector2
 
@@ -32,7 +31,7 @@ class Player(pygame.sprite.Sprite):
       self.state = 'idle'
       self.image = self.sprites[self.state][self.a_frame]
       self.rect = self.image.get_rect()
-      self.rect.x = SCREEN_WIDTH//2-self.image.get_width()//2
+      self.rect.x = constants.SCREEN_WIDTH//2-self.image.get_width()//2
       self.rect.y = 560
       self.size = self.image.get_size()
       self.facing = True
@@ -79,6 +78,7 @@ class Player(pygame.sprite.Sprite):
       self.hp_change = 0
       self.attack_value_change = 0
       self.no_hpcharges_change = 0
+      self.max_no_hpcharges = 3
 
    def attack(self):
       self.attack_sound[0].play()
@@ -95,6 +95,7 @@ class Player(pygame.sprite.Sprite):
          self.hurt_sound[0].set_volume(100)
          self.hurt_sound[1] = True
       if pygame.time.get_ticks() - self.iframes > 1000:
+         constants.DAMAGE_RECIEVED += hit_value
          self.a_frame = 0
          self.hurt_sound[1] = False
          self.state = 'hurt'
@@ -113,7 +114,7 @@ class Player(pygame.sprite.Sprite):
    def jump_update(self, fps):
       self.state = 'jump'
       self.rect.y -= self.vel.y
-      self.vel.y -= GRAVITY
+      self.vel.y -= constants.GRAVITY
       if self.vel.y < -self.jumpheight:
          self.jumping = False
          self.vel.y = 10
@@ -121,7 +122,7 @@ class Player(pygame.sprite.Sprite):
    def fall(self):
       self.vel.y = -abs(self.vel.y)
       self.rect.y -= self.vel.y
-      self.vel.y -= GRAVITY
+      self.vel.y -= constants.GRAVITY
 
    def dash(self, dt):
       if not self.dash_sound[1]: 
@@ -140,6 +141,7 @@ class Player(pygame.sprite.Sprite):
       self.state == 'heal'
       threshold = False
       if dt - self.heal_time >= 1300:
+         constants.HP_REFILLED += self.hpcharge
          self.heal_sound[0].play()
          if self.hp / self.maxhp <= 0.4:
             threshold = True
@@ -154,7 +156,7 @@ class Player(pygame.sprite.Sprite):
 
    def update(self, pressed_keys, event_update):
 
-      if GAME_STATE == 'paused':
+      if constants.GAME_STATE == 'paused':
          return
 
       self.acc = vec(0, 0)
@@ -183,8 +185,8 @@ class Player(pygame.sprite.Sprite):
 
       if self.rect.x < -40:
          self.rect.x = -40
-      if self.rect.x > SCREEN_WIDTH - self.size[0] + 40:
-         self.rect.x = SCREEN_WIDTH - self.size[0] + 40
+      if self.rect.x > constants.SCREEN_WIDTH - self.size[0] + 40:
+         self.rect.x = constants.SCREEN_WIDTH - self.size[0] + 40
 
       self.rect.x += self.vel.x
       self.attack_offset = (self.rect.centerx + 100*(1 if self.facing else -1), abs(self.rect.centery - self.image.get_height()//2))
