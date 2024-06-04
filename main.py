@@ -549,9 +549,10 @@ def death():
     SCORE = rob.score
     TIME_PLAYED = pygame.time.get_ticks() - TIME_PLAYED - pause_time_total
     pause_time_total = 0
-    with open('stats/stats.csv', 'a', newline='') as f:
-        write = csv.writer(f)
-        write.writerow([SCORE, ROUNDS, constants.DAMAGE_DEALT, constants.DAMAGE_RECIEVED, constants.HP_REFILLED, constants.SKELETONA, constants.SKELETONB, constants.BAT, constants.BRINGER, DASHES, JUMPS, round(TIME_PLAYED/1000, 2)])
+    path = os.path.join(os.path.expanduser('~'), 'Documents', 'DarkKnight', 'stats.csv')
+    with open(path, 'a', newline='') as file:
+        write = csv.writer(file)
+        write.writerow(['SCORE', 'ROUNDS', 'DAMAGE DEALT', 'DAMAGE RECIEVED', 'HP REFILLED', 'SKELETON A', 'SKELETON B', 'BAT', 'BRINGER', 'DASHES', 'JUMPS', 'TIME'])
     ground_group = pygame.sprite.Group()
     for i in range(0, math.ceil(SCREEN_WIDTH/64)):
         for j in range(-1, 2, 1):
