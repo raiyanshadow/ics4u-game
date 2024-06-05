@@ -38,7 +38,7 @@ class round(pygame.sprite.Sprite):
                     e.queue_list.append([enemy.SkeletonB(p), enemy.SkeletonB(p), enemy.Bringer(p)]*min(math.ceil(self.bosses_killed * 0.4), 3))
             if self.roundnum % 5 == 0:
                 self.changing = True
-                e.queue_list = [[enemy.SkeletonA(p), enemy.SkeletonB(p), enemy.Bringer(p)]*min(math.ceil(self.bosses_killed * 0.6), 2)]
+                e.queue_list = [[enemy.SkeletonA(p), enemy.SkeletonB(p), enemy.Bringer(p)]*min(max(math.ceil(self.bosses_killed * 0.6), 1), 2)]
                 for i in range(math.ceil(self.bosses_killed * (self.one_third))):
                     e.queue_list.append([enemy.Bat(p), enemy.SkeletonA(p),enemy.Bringer(p)]*min(math.ceil(self.bosses_killed * 0.4), 3))
             e.queue.add(e.queue_list[0])

@@ -36,7 +36,7 @@ class SkeletonA(Enemy):
         self.attacking = False
         self.hurt = False
         self.state = 'Idle'
-        self.hp = 200 + (250*(player.bosses_killed))
+        self.hp = 200 + (150*(player.bosses_killed))
         self.frame = 0
         self.facing = True
         self.dt = pygame.time.get_ticks()
@@ -165,7 +165,7 @@ class SkeletonB(Enemy):
         self.attacking = False
         self.hurt = False
         self.state = 'Idle'
-        self.hp = 400 + (500 * player.bosses_killed)
+        self.hp = 400 + (300 * player.bosses_killed)
         self.frame = 0
         self.facing = True
         self.dt = pygame.time.get_ticks()
@@ -296,7 +296,7 @@ class Bat(Enemy):
         self.attacking = False
         self.hurt = False
         self.state = 'Idle'
-        self.hp = 50 + (200 * player.bosses_killed)
+        self.hp = 50 + (100 * player.bosses_killed)
         self.frame = 0
         self.facing = True
         self.dt = pygame.time.get_ticks()
@@ -432,7 +432,7 @@ class Bringer(Enemy):
         self.attacking = False
         self.hurt = False
         self.state = 'Idle'
-        self.hp = 400 + (500 * player.bosses_killed)
+        self.hp = 400 + (300 * player.bosses_killed)
         self.frame = 0
         self.facing = True
         self.dt = pygame.time.get_ticks()
