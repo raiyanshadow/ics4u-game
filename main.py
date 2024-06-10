@@ -305,6 +305,7 @@ def play():
 
     def render(scroll, dash_frame, heart_anim, blinker, fade):
         global fader
+        sctext = FONT_24.render(f'Score: {rob.score}', False, WHITE)
         if GAME_STATE == 'paused': 
             if controls:
                 draw_controls(borders)
@@ -330,20 +331,21 @@ def play():
             return False
         draw_bg(scroll)
         ground_group.draw(SCREEN)
-        b_img = pygame.transform.scale2x(borders[0][0])
-        p_img = clip_image(rob.image, (56*2,6*2,29*2,23*2))
-        hbar.update()
-        heartpos = (25+b_img.get_width()+10, hbar.image.get_height())
-        SCREEN.blit(pygame.image.load(f'./sprites/heart{heart_anim+1}.png').convert_alpha(), heartpos)
-        SCREEN.blit(FONT_24.render(str(rob.no_hpcharges), True, WHITE), (heartpos[0] + 60, heartpos[1] + 20))
-        SCREEN.blit(b_img, (25, 25))
-        SCREEN.blit(rob_profile, (25 + b_img.get_width()/2 - rob_profile.get_width()/2, p_img.get_height()))
         if rob.facing: 
             SCREEN.blit(rob.mask.to_surface(setcolor=(255, 255, 255, 255), unsetcolor=(0, 0, 0, 0)), rob.rect)
             SCREEN.blit(rob.image, rob.rect)
         else: 
             SCREEN.blit(pygame.transform.flip(rob.mask.to_surface(setcolor=(255, 255, 255, 255), unsetcolor=(0, 0, 0, 0)), True, False), rob.rect)
             SCREEN.blit(pygame.transform.flip(rob.image, True, False), rob.rect)
+        b_img = pygame.transform.scale2x(borders[0][0])
+        p_img = clip_image(rob.image, (56*2,6*2,29*2,23*2))
+        hbar.update()
+        heartpos = (25+b_img.get_width()+10, hbar.image.get_height())
+        SCREEN.blit(sctext, (60+heartpos[0]+hbar.w, heartpos[1]//2-5))
+        SCREEN.blit(pygame.image.load(f'./sprites/heart{heart_anim+1}.png').convert_alpha(), heartpos)
+        SCREEN.blit(FONT_24.render(str(rob.no_hpcharges), True, WHITE), (heartpos[0] + 60, heartpos[1] + 20))
+        SCREEN.blit(b_img, (25, 25))
+        SCREEN.blit(rob_profile, (25 + b_img.get_width()/2 - rob_profile.get_width()/2, p_img.get_height()))
         if rob.dead: 
             if pygame.time.get_ticks() - death_done > 1000:
                 fader = pygame.surface.Surface((SCREEN_WIDTH, SCREEN_HEIGHT)).convert()
@@ -549,7 +551,7 @@ def death():
     SCORE = rob.score
     TIME_PLAYED = pygame.time.get_ticks() - TIME_PLAYED - pause_time_total
     pause_time_total = 0
-    with open('./stats/stats.csv', 'a') as file:
+    with open('./stats/stats.csv', 'a', newline='') as file:
         write = csv.writer(file)
         write.writerow([SCORE, ROUNDS, constants.DAMAGE_DEALT, constants.DAMAGE_RECIEVED, constants.HP_REFILLED, constants.SKELETONA, constants.SKELETONB, constants.BAT, constants.BRINGER, DASHES, JUMPS, round(TIME_PLAYED/1000, 2)])
     ground_group = pygame.sprite.Group()
@@ -628,6 +630,8 @@ def death():
         SCREEN.blit(fader, (0, 0))
         death.set_alpha(fade)
         SCREEN.blit(death, (0, SCREEN_HEIGHT//2 - death.get_height()//2))
+        sctext = FONT_24.render(f'Score: {rob.score}', False, WHITE)
+        SCREEN.blit(sctext, (SCREEN_WIDTH//2 - sctext.get_width()//2, 100))
         for i in range(len(texts)):
             text = 0
             if i == selected: 

@@ -53,7 +53,6 @@ class Player(pygame.sprite.Sprite):
       self.dashing = False
       self.dash_time = 0
       self.veldash = 0
-      self.hpcharge = 60
       self.healing = False
       self.heal_time = 0
       self.no_hpcharges = 3
@@ -145,7 +144,7 @@ class Player(pygame.sprite.Sprite):
          self.heal_sound[0].play()
          if self.hp / self.maxhp <= 0.4:
             threshold = True
-         self.hp += self.hpcharge
+         self.hp += self.hp*0.6
          self.hp = min(self.hp, self.maxhp)
          if threshold:
             self.heartbeat.set_volume(0)
