@@ -140,7 +140,7 @@ class Player(pygame.sprite.Sprite):
       self.state == 'heal'
       threshold = False
       if dt - self.heal_time >= 1300:
-         constants.HP_REFILLED += self.hpcharge
+         constants.HP_REFILLED += self.hp*0.6
          self.heal_sound[0].play()
          if self.hp / self.maxhp <= 0.4:
             threshold = True
